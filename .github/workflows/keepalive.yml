@@ -1,0 +1,18 @@
+# Un projet Supabase gratuit est mis en pause après ~7 jours sans activité.
+# Ce ping hebdomadaire (une requête REST anonyme) le maintient actif.
+name: Keepalive Supabase
+
+on:
+  schedule:
+    - cron: '17 6 * * 1,4' # lundi et jeudi, 06:17 UTC
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    if: ${{ vars.VITE_SUPABASE_URL != '' }}
+    steps:
+      - run: |
+          curl -fsS -o /dev/null -w "%{http_code}\n" \
+            "${{ vars.VITE_SUPABASE_URL }}/rest/v1/tags?select=id&limit=1" \
+            -H "apikey: ${{ vars.VITE_SUPABASE_ANON_KEY }}"

@@ -1,0 +1,26 @@
+# (Optionnel) Applique les migrations SQL sur le projet Supabase hébergé
+# quand un fichier de supabase/ change sur main.
+# Secrets requis : SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD.
+# Variable requise : SUPABASE_PROJECT_REF.
+name: Déploiement Supabase
+
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/**']
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    if: ${{ vars.SUPABASE_PROJECT_REF != '' }}
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: supabase/setup-cli@v3
+        with:
+          version: latest
+      - run: supabase link --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
+      - run: supabase db push

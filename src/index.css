@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/* Le mode sombre est piloté par la classe .dark sur <html> (sombre par défaut). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Palette sémantique : les composants utilisent bg-bg, text-fg, etc.
+   Contraste élevé dans les deux thèmes (lisibilité en plein soleil). */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+}
+
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-2: #e8edf3;
+  --line: #c9d2dd;
+  --fg: #0b1220;
+  --muted: #3f4b5c;
+  --accent: #0369a1;
+  --accent-fg: #ffffff;
+  --danger: #b91c1c;
+  --warning: #b45309;
+  --success: #15803d;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0b0f14;
+  --surface: #141a22;
+  --surface-2: #1e2732;
+  --line: #2c3846;
+  --fg: #f3f6fa;
+  --muted: #a9b6c6;
+  --accent: #38bdf8;
+  --accent-fg: #04121c;
+  --danger: #f87171;
+  --warning: #fbbf24;
+  --success: #4ade80;
+  color-scheme: dark;
+}
+
+/* Styles de base dans @layer base : sinon ils l'emporteraient sur les
+   utilitaires Tailwind (qui sont dans @layer utilities). */
+@layer base {
+  html {
+    /* 16 px minimum : lisibilité et pas de zoom automatique sur iOS. */
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+
+  input, select, textarea, button {
+    font: inherit;
+  }
+
+  /* Pictogramme du sélecteur de date lisible en thème sombre */
+  .dark input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+}
+
+/* Zone tactile minimale 44 px pour tous les boutons "icône". */
+@utility tap {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
