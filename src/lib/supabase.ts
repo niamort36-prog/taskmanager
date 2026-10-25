@@ -7,7 +7,8 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const isSupabaseConfigured = Boolean(url && anonKey)
 
-export const supabase = createClient(url ?? 'http://localhost', anonKey ?? 'missing', {
+// `||` et non `??` : en CI, une variable absente vaut "" (chaîne vide).
+export const supabase = createClient(url || 'http://localhost', anonKey || 'missing', {
   auth: {
     // PKCE : le lien magique revient avec ?code=... (et non #access_token=...),
     // ce qui est compatible avec le HashRouter.
