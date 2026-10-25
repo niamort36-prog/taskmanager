@@ -34,6 +34,7 @@ function describe(e: HistoryEntry): string[] {
     const name = (e.changes as { name?: string }).name ?? '?'
     return [e.action === 'insert' ? `Étiquette « ${name} » ajoutée` : `Étiquette « ${name} » retirée`]
   }
+  if (e.entity === 'reminder') return [e.action === 'insert' ? 'Rappel ajouté' : 'Rappel supprimé']
   if (e.entity === 'contact') {
     const { name = '?' } = e.changes as { name?: string }
     return [e.action === 'insert' ? `Contact lié : ${name}` : `Contact retiré : ${name}`]

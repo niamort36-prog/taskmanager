@@ -20,4 +20,6 @@ export const qk = {
   taskContacts: (taskId: string) => ['task-contacts', taskId] as const,
   links: (taskId: string) => ['links', taskId] as const,
   attachments: (taskId: string) => ['attachments', taskId] as const,
+  reminders: (taskId: string) => ['reminders', taskId] as const,
+  notificationLogs: ['notification-logs'] as const,
 }

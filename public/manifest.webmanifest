@@ -1,0 +1,31 @@
+{
+  "name": "Mes tâches",
+  "short_name": "Tâches",
+  "description": "Gestion de tâches personnelle avec rappels",
+  "lang": "fr",
+  "id": "./",
+  "start_url": "./#/today",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f14",
+  "theme_color": "#0b0f14",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nouvelle tâche",
+      "short_name": "Nouvelle",
+      "url": "./#/today?new=1",
+      "icons": [{ "src": "icons/shortcut-new.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Aujourd'hui",
+      "url": "./#/today",
+      "icons": [{ "src": "icons/shortcut-today.png", "sizes": "96x96", "type": "image/png" }]
+    }
+  ]
+}

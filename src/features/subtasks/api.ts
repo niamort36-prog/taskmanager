@@ -16,6 +16,7 @@ export function useSubtaskMutations(taskId: string) {
     qc.invalidateQueries({ queryKey: qk.task(taskId) })
     qc.invalidateQueries({ queryKey: qk.tasks }) // compteurs de progression
     qc.invalidateQueries({ queryKey: qk.history(taskId) })
+    qc.invalidateQueries({ queryKey: qk.reminders(taskId) })
   }
 
   const add = useMutation({

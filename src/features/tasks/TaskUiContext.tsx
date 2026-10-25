@@ -41,6 +41,17 @@ export function TaskUiProvider({ children }: { children: ReactNode }) {
 
   const openTaskId = params.get('task')
 
+  // Raccourci "Nouvelle tâche" de l'icône de l'app : #/today?new=1
+  useEffect(() => {
+    if (params.get('new') !== '1') return
+    setQuickAddOpen(true)
+    setParams((p) => {
+      const n = new URLSearchParams(p)
+      n.delete('new')
+      return n
+    }, { replace: true })
+  }, [params, setParams])
+
   // Changement d'onglet : on referme les feuilles et la sélection en cours.
   const { pathname } = useLocation()
   useEffect(() => {

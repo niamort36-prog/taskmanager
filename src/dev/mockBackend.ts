@@ -46,6 +46,9 @@ const db: Record<string, Row[]> = {
   task_contacts: [],
   links: [],
   attachments: [],
+  reminders: [],
+  push_subscriptions: [],
+  notification_logs: [],
 }
 const t0 = db.tasks[1].id
 db.subtasks.push(
@@ -63,6 +66,9 @@ const DEFAULTS: Record<string, () => Row> = {
   contacts: () => ({ id: uuid(), user_id: USER_ID, role: '', company: '', phone: '', email: '', notes: '', created_at: new Date().toISOString() }),
   task_contacts: () => ({ user_id: USER_ID, role_on_task: '', created_at: new Date().toISOString() }),
   links: () => ({ id: uuid(), user_id: USER_ID, label: '', position: 0, created_at: new Date().toISOString() }),
+  reminders: () => ({ id: uuid(), user_id: USER_ID, subtask_id: null, remind_at: null, offset_minutes: null, recurrence: null, channels: ['push'], ignore_dnd: false, active: true, next_fire_at: null, last_fired_at: null, created_at: new Date().toISOString() }),
+  push_subscriptions: () => ({ id: uuid(), user_id: USER_ID }),
+  notification_logs: () => ({}),
   attachments: () => ({ id: uuid(), user_id: USER_ID, label: '', storage_path: null, location: null, mime: null, size: null, created_at: new Date().toISOString() }),
   settings: () => ({ user_id: USER_ID, theme: 'dark', timezone: 'Europe/Paris', push_enabled: true, email_enabled: false, sms_enabled: false, notify_email: null, dnd_start: null, dnd_end: null, digest_enabled: false, digest_time: '07:30', ai_daily_limit: 50 }),
 }
@@ -90,6 +96,7 @@ function matches(row: Row, params: URLSearchParams): boolean {
 }
 
 function embed(table: string, row: Row, select: string): Row {
+  if (table === 'notification_logs') return { ...row, task: db.tasks.find((t) => t.id === row.task_id) ?? null }
   if (table === 'task_contacts' && select.includes('contacts')) {
     return { ...row, contact: db.contacts.find((c) => c.id === row.contact_id) }
   }
@@ -103,6 +110,18 @@ function embed(table: string, row: Row, select: string): Row {
 function onWrite(table: string, row: Row, before?: Row) {
   row.updated_at = new Date().toISOString()
   if (table === 'tasks' && row.status !== before?.status) row.completed_at = row.status === 'done' ? new Date().toISOString() : null
+  // Version simplifiée du trigger SQL reminders_compute_next.
+  if (table === 'reminders') {
+    const task = db.tasks.find((t) => t.id === row.task_id)
+    const due = row.subtask_id ? db.subtasks.find((s) => s.id === row.subtask_id)?.due_at : task?.due_at
+    row.next_fire_at = !row.active
+      ? null
+      : row.mode === 'absolute'
+        ? row.remind_at
+        : due
+          ? new Date(new Date(String(due)).getTime() + Number(row.offset_minutes) * 60000).toISOString()
+          : null
+  }
 }
 
 const json = (body: unknown, status = 200) =>
@@ -170,6 +189,7 @@ export function installMockBackend() {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
     if (url.pathname.includes('/rest/v1/')) return handle(url, init)
     if (url.pathname.includes('/auth/v1/')) return json({})
+    if (url.pathname.includes('/functions/v1/')) return json({ ok: true, detail: 'démo' })
     // Storage simulé : les fichiers ne sont pas conservés.
     if (url.pathname.includes('/storage/v1/object/sign/')) return json({ signedURL: '/object/sign/demo?token=demo' })
     if (url.pathname.includes('/storage/v1/')) return json({ Key: 'demo', Id: uuid() })

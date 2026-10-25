@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "db:push": "supabase db push",
-    "db:types": "supabase gen types typescript --linked > src/types/database.ts"
+    "db:types": "supabase gen types typescript --linked > src/types/database.ts",
+    "functions:deploy": "supabase functions deploy send-reminders --no-verify-jwt --project-ref yuevvnutdfsqnabbnbgh && supabase functions deploy notify-test --project-ref yuevvnutdfsqnabbnbgh",
+    "secrets:push": "supabase secrets set --env-file supabase/.env.secrets --project-ref yuevvnutdfsqnabbnbgh"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",

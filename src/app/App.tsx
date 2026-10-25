@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -11,6 +12,7 @@ import { TasksPage } from '@/features/tasks/TasksPage'
 import { TaskUiProvider } from '@/features/tasks/TaskUiContext'
 import { TodayPage } from '@/features/tasks/TodayPage'
 import { queryClient } from '@/lib/queryClient'
+import { refreshSubscription } from '@/lib/push'
 import { isSupabaseConfigured } from '@/lib/supabase'
 import { AppLayout } from './AppLayout'
 
@@ -35,6 +37,7 @@ function AuthGate() {
   const { session, loading } = useAuth()
   const { data: settings } = useSettings(session?.user.id)
   useThemeSync(settings)
+  usePushBridge(Boolean(session))
 
   if (loading) return <div className="min-h-dvh" aria-busy />
   if (!session) return <LoginPage />
@@ -58,6 +61,23 @@ function AuthGate() {
       </Route>
     </Routes>
   )
+}
+
+/**
+ * Lien avec le service worker : clic sur une notification alors que l'app
+ * est ouverte (on navigue vers la tâche), renouvellement d'abonnement push.
+ */
+function usePushBridge(signedIn: boolean) {
+  useEffect(() => {
+    if (!signedIn || !('serviceWorker' in navigator)) return
+    void refreshSubscription()
+    const onMessage = (e: MessageEvent<{ type?: string; url?: string }>) => {
+      if (e.data?.type === 'open-url' && e.data.url) window.location.href = e.data.url
+      if (e.data?.type === 'resubscribe') void refreshSubscription()
+    }
+    navigator.serviceWorker.addEventListener('message', onMessage)
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage)
+  }, [signedIn])
 }
 
 function ConfigMissing() {

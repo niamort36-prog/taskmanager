@@ -8,3 +8,5 @@ supabase/.branches
 *.log
 .DS_Store
 .claude/
+supabase/.env*
+deno.lock

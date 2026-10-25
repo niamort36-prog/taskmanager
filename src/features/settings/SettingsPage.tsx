@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { useSettings, useUpdateSettings } from './api'
+import { NotificationSettings } from './NotificationSettings'
 
 export function SettingsPage() {
   const { session } = useAuth()
@@ -47,9 +48,7 @@ export function SettingsPage() {
 
         <section className="space-y-2">
           <h2 className="font-semibold text-muted">Notifications</h2>
-          <p className="rounded-xl border border-line bg-surface p-3 text-muted">
-            Les canaux (push, email, SMS) et les plages « ne pas déranger » arrivent avec les phases 3 et 4.
-          </p>
+          <NotificationSettings settings={settings} />
         </section>
 
         <section className="space-y-2">

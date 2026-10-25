@@ -10,7 +10,7 @@ Webapp personnelle de gestion de tâches, **mobile first**, installable en PWA.
 |---|---|---|
 | 1 | Setup, Auth, tâches et sous-tâches, vues, déploiement | ✅ |
 | 2 | Contacts, liens, dossiers, pièces jointes, Markdown | ✅ |
-| 3 | Rappels + notifications push | ⏳ |
+| 3 | Rappels + notifications push | ✅ |
 | 4 | Emails (Resend) et SMS (Free Mobile) | ⏳ |
 | 5 | Assistant IA (Gemini) | ⏳ |
 | 6 | PWA, hors ligne, finitions | ⏳ |
@@ -129,13 +129,41 @@ Un projet gratuit est mis en pause après ~7 jours sans requête. Le workflow [`
 
 La migration de la phase 2 crée aussi le bucket Storage privé `attachments` (50 Mo max par fichier) et ses règles d'accès : rien à faire à la main dans *Storage*.
 
-## 5. Tester sur votre téléphone
+## 5. Rappels et notifications push (phase 3)
+
+### Fonctionnement
+1. `pg_cron` exécute `dispatch_due_reminders()` **chaque minute**. Cette fonction SQL n'appelle l'Edge Function `send-reminders` (via `pg_net`) que s'il existe des rappels échus.
+2. `send-reminders` vérifie le secret partagé (stocké dans Supabase Vault), puis appelle `claim_due_notifications()`. Celle-ci, dans une seule transaction, verrouille les rappels, crée une ligne de journal par canal (contrainte unique : **jamais de doublon**) et calcule l'occurrence suivante en heure de Paris.
+3. Chaque envoi est journalisé dans `notification_logs` (`sent`, `failed` avec 3 tentatives maximum, ou `skipped`). Le journal est visible dans Réglages.
+4. Pendant la plage « ne pas déranger », les rappels attendent sa fin.
+
+### Mise en place (une fois)
+1. **Migration** : exécuter `supabase/migrations/20261027000001_reminders_push.sql` dans le SQL Editor. Elle active `pg_cron` et `pg_net`, génère le secret du cron dans Vault et planifie la tâche.
+2. **URL du projet dans Vault** (SQL Editor) :
+   ```sql
+   select vault.create_secret('https://<REF>.supabase.co', 'project_url');
+   ```
+3. **Clés VAPID** : `supabase/.env.secrets` (ignoré par git) contient la paire de clés. Pour en générer une nouvelle : `npx web-push generate-vapid-keys`.
+   - La clé **publique** va dans la variable GitHub `VITE_VAPID_PUBLIC_KEY`.
+   - La clé **privée** reste dans les secrets Supabase.
+4. **Déploiement des Edge Functions** (après `npx supabase login`) :
+   ```bash
+   npm run secrets:push
+   ```
+   ```bash
+   npm run functions:deploy
+   ```
+5. Dans l'app : **Réglages → Notifications push sur cet appareil → Activer**, puis **Envoyer un test**.
+
+> **iPhone** : les notifications push ne fonctionnent que si l'app est **installée sur l'écran d'accueil** (Safari → Partager → « Sur l'écran d'accueil », iOS 16.4 ou plus). L'écran Réglages l'explique.
+
+## 6. Tester sur votre téléphone
 
 - **Version déployée** : ouvrez <https://niamort36-prog.github.io/taskmanager/> dans Chrome (Android) ou Safari (iPhone).
 - **Version locale** : `npm run dev -- --host`, puis ouvrez `http://<IP-du-PC>:5173/taskmanager/` depuis le téléphone (même Wi-Fi). Ajoutez cette URL aux *Redirect URLs* Supabase si vous voulez utiliser le lien de l'email ; le code à 6 chiffres fonctionne dans tous les cas.
 - **Dans le navigateur du PC** : outils de développement (F12) → icône téléphone → *iPhone 12 Pro* (390 px), *Galaxy S8* (360 px), *iPhone 14 Pro Max* (430 px).
 
-## 6. Gestes et raccourcis
+## 7. Gestes et raccourcis
 
 | Geste | Effet |
 |---|---|
@@ -148,13 +176,13 @@ La migration de la phase 2 crée aussi le bucket Storage privé `attachments` (5
 | Boutons téléphone / bulle / enveloppe d'un contact | Appeler, SMS, email (tel:, sms:, mailto:) |
 | Toucher un chemin réseau | Le copie dans le presse-papiers (un navigateur ne peut pas l'ouvrir) |
 
-## 7. Secrets (phases suivantes)
+## 8. Secrets (phases suivantes)
 
 Tous les secrets vont dans **Supabase → Edge Functions → Secrets** (ou `npx supabase secrets set NOM=valeur`), jamais dans le dépôt :
 
 | Secret | Phase | Où l'obtenir |
 |---|---|---|
-| `VAPID_PRIVATE_KEY` | 3 | généré par un script fourni en phase 3 |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `APP_URL` | 3 | `supabase/.env.secrets`, envoyé par `npm run secrets:push` |
 | `RESEND_API_KEY` | 4 | <https://resend.com> → API Keys |
 | `FREE_MOBILE_USER`, `FREE_MOBILE_KEY` | 4 | Espace abonné Free Mobile → *Mes options* → activer **Notifications par SMS** : l'identifiant et la clé s'affichent |
 | `GEMINI_API_KEY` | 5 | <https://aistudio.google.com/apikey> |

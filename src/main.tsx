@@ -8,6 +8,11 @@ async function start() {
     const { installMockBackend } = await import('./dev/mockBackend')
     installMockBackend()
   }
+  // Service worker (notifications push). Pas en mode démo.
+  if (import.meta.env.VITE_MOCK !== '1') {
+    const { registerServiceWorker } = await import('./lib/push')
+    void registerServiceWorker()
+  }
   // Import après l'installation éventuelle du mock (le client Supabase capture fetch).
   const { App } = await import('./app/App')
   createRoot(document.getElementById('root')!).render(

@@ -5,6 +5,7 @@ import { AttachmentsSection } from '@/features/attachments/AttachmentsSection'
 import { TaskContactsSection } from '@/features/contacts/TaskContactsSection'
 import { HistoryList } from '@/features/history/HistoryList'
 import { LinksSection } from '@/features/links/LinksSection'
+import { RemindersSection } from '@/features/reminders/RemindersSection'
 import { SubtaskList } from '@/features/subtasks/SubtaskList'
 import { TagPicker } from '@/features/tags/TagPicker'
 import { formatDateTime } from '@/lib/dates'
@@ -164,6 +165,10 @@ function TaskForm({ task }: { task: TaskDetailData }) {
 
       <Section title="Échéance">
         <DueField value={{ due_at: task.due_at, due_has_time: task.due_has_time }} onChange={(d) => save(d)} />
+      </Section>
+
+      <Section title="Rappels">
+        <RemindersSection taskId={task.id} taskDue={task.due_at} subtasks={task.subtasks} />
       </Section>
 
       <Section title="Étiquettes">

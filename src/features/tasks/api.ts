@@ -91,6 +91,7 @@ export function useUpdateTasks() {
       ids.forEach((id) => {
         qc.invalidateQueries({ queryKey: qk.task(id) })
         qc.invalidateQueries({ queryKey: qk.history(id) })
+        qc.invalidateQueries({ queryKey: qk.reminders(id) }) // next_fire_at recalculé côté serveur
       })
     },
   })

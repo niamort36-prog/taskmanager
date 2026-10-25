@@ -124,3 +124,44 @@ export interface Attachment {
   size: number | null
   created_at: string
 }
+
+export type NotifyChannel = 'push' | 'email' | 'sms'
+
+export interface Recurrence {
+  freq: 'daily' | 'weekly' | 'monthly' | 'yearly'
+  interval?: number
+  /** Jours ISO (1 = lundi … 7 = dimanche), pour freq = weekly. */
+  byweekday?: number[]
+  /** Date de fin incluse (yyyy-MM-dd). */
+  until?: string
+}
+
+export interface Reminder {
+  id: string
+  task_id: string
+  subtask_id: string | null
+  mode: 'absolute' | 'relative'
+  remind_at: string | null
+  offset_minutes: number | null
+  recurrence: Recurrence | null
+  channels: NotifyChannel[]
+  ignore_dnd: boolean
+  active: boolean
+  next_fire_at: string | null
+  last_fired_at: string | null
+  created_at: string
+}
+
+export interface NotificationLog {
+  id: number
+  reminder_id: string | null
+  task_id: string | null
+  kind: 'reminder' | 'digest' | 'test'
+  occurrence_at: string
+  channel: NotifyChannel
+  status: 'sending' | 'sent' | 'failed' | 'skipped'
+  attempts: number
+  error: string | null
+  sent_at: string | null
+  created_at: string
+}
