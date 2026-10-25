@@ -83,3 +83,44 @@ export type TaskPatch = Partial<
     'title' | 'description' | 'notes_md' | 'status' | 'priority' | 'due_at' | 'due_has_time' | 'deleted_at' | 'position'
   >
 >
+
+export interface Contact {
+  id: string
+  name: string
+  role: string
+  company: string
+  phone: string
+  email: string
+  notes: string
+  created_at: string
+  updated_at: string
+}
+
+/** Contact lié à une tâche, avec son rôle sur cette tâche. */
+export interface TaskContact {
+  task_id: string
+  contact_id: string
+  role_on_task: string
+  contact: Contact
+}
+
+export interface Link {
+  id: string
+  task_id: string
+  url: string
+  label: string
+  position: number
+  created_at: string
+}
+
+export interface Attachment {
+  id: string
+  task_id: string
+  kind: 'file' | 'folder'
+  label: string
+  storage_path: string | null
+  location: string | null
+  mime: string | null
+  size: number | null
+  created_at: string
+}

@@ -16,4 +16,8 @@ export const qk = {
   tags: ['tags'] as const,
   history: (taskId: string) => ['history', taskId] as const,
   settings: ['settings'] as const,
+  contacts: ['contacts'] as const,
+  taskContacts: (taskId: string) => ['task-contacts', taskId] as const,
+  links: (taskId: string) => ['links', taskId] as const,
+  attachments: (taskId: string) => ['attachments', taskId] as const,
 }

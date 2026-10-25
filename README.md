@@ -9,7 +9,7 @@ Webapp personnelle de gestion de tâches, **mobile first**, installable en PWA.
 | Phase | Contenu | État |
 |---|---|---|
 | 1 | Setup, Auth, tâches et sous-tâches, vues, déploiement | ✅ |
-| 2 | Contacts, liens, dossiers, pièces jointes, Markdown | ⏳ |
+| 2 | Contacts, liens, dossiers, pièces jointes, Markdown | ✅ |
 | 3 | Rappels + notifications push | ⏳ |
 | 4 | Emails (Resend) et SMS (Free Mobile) | ⏳ |
 | 5 | Assistant IA (Gemini) | ⏳ |
@@ -28,7 +28,8 @@ supabase/
 src/
   app/               routes et mise en page (barre du bas / barre latérale)
   components/ui/     composants génériques (bottom sheet, toast, champ date…)
-  features/          un dossier par domaine : auth, tasks, subtasks, tags, calendar, settings, history
+  features/          un dossier par domaine : auth, tasks, subtasks, tags, contacts, links,
+                     attachments, calendar, settings, history
   lib/               client Supabase, cache, dates (Europe/Paris)
   types/             types métier
 ```
@@ -120,13 +121,21 @@ Un projet gratuit est mis en pause après ~7 jours sans requête. Le workflow [`
 - secrets : `SUPABASE_ACCESS_TOKEN` (<https://supabase.com/dashboard/account/tokens>) et `SUPABASE_DB_PASSWORD` ;
 - variable : `SUPABASE_PROJECT_REF`.
 
-## 4. Tester sur votre téléphone
+## 4. Mettre à jour la base (nouvelle migration)
+
+À chaque phase, un nouveau fichier apparaît dans `supabase/migrations/`. Pour l'appliquer :
+- **SQL Editor** du dashboard → coller le contenu du **nouveau** fichier uniquement → *Run* ;
+- ou `npx supabase db push` (après `npx supabase login` et `npx supabase link`), qui n'applique que les migrations manquantes.
+
+La migration de la phase 2 crée aussi le bucket Storage privé `attachments` (50 Mo max par fichier) et ses règles d'accès : rien à faire à la main dans *Storage*.
+
+## 5. Tester sur votre téléphone
 
 - **Version déployée** : ouvrez <https://niamort36-prog.github.io/taskmanager/> dans Chrome (Android) ou Safari (iPhone).
 - **Version locale** : `npm run dev -- --host`, puis ouvrez `http://<IP-du-PC>:5173/taskmanager/` depuis le téléphone (même Wi-Fi). Ajoutez cette URL aux *Redirect URLs* Supabase si vous voulez utiliser le lien de l'email ; le code à 6 chiffres fonctionne dans tous les cas.
 - **Dans le navigateur du PC** : outils de développement (F12) → icône téléphone → *iPhone 12 Pro* (390 px), *Galaxy S8* (360 px), *iPhone 14 Pro Max* (430 px).
 
-## 5. Gestes et raccourcis
+## 6. Gestes et raccourcis
 
 | Geste | Effet |
 |---|---|
@@ -136,8 +145,10 @@ Un projet gratuit est mis en pause après ~7 jours sans requête. Le workflow [`
 | Appui long | Sélection multiple → terminer / reporter / supprimer en groupe |
 | Bouton « + » | Saisie rapide (titre seul + raccourcis de date) |
 | Tirer la poignée d'une sous-tâche | Réordonner |
+| Boutons téléphone / bulle / enveloppe d'un contact | Appeler, SMS, email (tel:, sms:, mailto:) |
+| Toucher un chemin réseau | Le copie dans le presse-papiers (un navigateur ne peut pas l'ouvrir) |
 
-## 6. Secrets (phases suivantes)
+## 7. Secrets (phases suivantes)
 
 Tous les secrets vont dans **Supabase → Edge Functions → Secrets** (ou `npx supabase secrets set NOM=valeur`), jamais dans le dépôt :
 

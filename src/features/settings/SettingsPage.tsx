@@ -1,4 +1,5 @@
-import { LogOut, Moon, Sun } from 'lucide-react'
+import { ChevronRight, LogOut, Moon, Sun, Users } from 'lucide-react'
+import { Link } from 'react-router'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
@@ -30,6 +31,18 @@ export function SettingsPage() {
               </button>
             ))}
           </div>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="font-semibold text-muted">Données</h2>
+          <Link
+            to="/contacts"
+            className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-surface px-3"
+          >
+            <Users className="size-5 text-accent" />
+            <span className="flex-1">Carnet de contacts</span>
+            <ChevronRight className="size-5 text-muted" />
+          </Link>
         </section>
 
         <section className="space-y-2">

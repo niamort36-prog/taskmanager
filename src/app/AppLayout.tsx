@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router'
-import { CalendarDays, ListTodo, Plus, Settings, Sun } from 'lucide-react'
+import { CalendarDays, ListTodo, Plus, Settings, Sun, Users } from 'lucide-react'
 import { useIsDesktop } from '@/lib/useMediaQuery'
 import { TaskDetail } from '@/features/tasks/TaskDetail'
 import { BulkActionBar, Fab, PostponeSheet, QuickAddSheet, TaskDetailSheet } from '@/features/tasks/TaskSheets'
@@ -86,7 +86,7 @@ function Sidebar() {
       >
         <Plus className="size-5" /> Nouvelle tâche
       </button>
-      {NAV.map(({ to, label, icon: Icon }) => (
+      {[...NAV.slice(0, 3), { to: '/contacts', label: 'Contacts', icon: Users }, NAV[3]].map(({ to, label, icon: Icon }) => (
         <NavLink
           key={to}
           to={to}

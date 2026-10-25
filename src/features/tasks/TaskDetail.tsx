@@ -1,13 +1,17 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown, History, Trash2, X } from 'lucide-react'
 import { DueField } from '@/components/ui/DueField'
+import { AttachmentsSection } from '@/features/attachments/AttachmentsSection'
+import { TaskContactsSection } from '@/features/contacts/TaskContactsSection'
 import { HistoryList } from '@/features/history/HistoryList'
+import { LinksSection } from '@/features/links/LinksSection'
 import { SubtaskList } from '@/features/subtasks/SubtaskList'
 import { TagPicker } from '@/features/tags/TagPicker'
 import { formatDateTime } from '@/lib/dates'
 import type { TaskDetail as TaskDetailData } from '@/types/domain'
 import { useTask, useUpdateTask } from './api'
 import { PRIORITIES, PRIORITY_DOT, PRIORITY_LABEL, STATUS_LABEL, STATUS_ORDER } from './meta'
+import { NotesField } from './NotesField'
 import { useTaskActions } from './useTaskActions'
 
 /** Contenu du détail d'une tâche (utilisé en bottom sheet sur mobile, en panneau sur PC). */
@@ -180,14 +184,20 @@ function TaskForm({ task }: { task: TaskDetailData }) {
         <SubtaskList taskId={task.id} subtasks={task.subtasks} />
       </Section>
 
+      <Section title="Contacts">
+        <TaskContactsSection taskId={task.id} />
+      </Section>
+
+      <Section title="Liens">
+        <LinksSection taskId={task.id} />
+      </Section>
+
+      <Section title="Dossiers et fichiers">
+        <AttachmentsSection taskId={task.id} />
+      </Section>
+
       <Section title="Notes">
-        <AutoTextarea
-          label="Notes"
-          value={task.notes_md}
-          onSave={(notes_md) => save({ notes_md })}
-          placeholder="Notes libres (Markdown)…"
-          className="-mx-2 min-h-24 font-mono"
-        />
+        <NotesField value={task.notes_md} onSave={(notes_md) => save({ notes_md })} />
       </Section>
 
       <details className="group rounded-lg border border-line">

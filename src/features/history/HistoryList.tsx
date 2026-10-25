@@ -34,6 +34,20 @@ function describe(e: HistoryEntry): string[] {
     const name = (e.changes as { name?: string }).name ?? '?'
     return [e.action === 'insert' ? `Étiquette « ${name} » ajoutée` : `Étiquette « ${name} » retirée`]
   }
+  if (e.entity === 'contact') {
+    const { name = '?' } = e.changes as { name?: string }
+    return [e.action === 'insert' ? `Contact lié : ${name}` : `Contact retiré : ${name}`]
+  }
+  if (e.entity === 'link' || e.entity === 'attachment') {
+    const what = e.entity === 'link' ? 'Lien' : c.kind?.new === 'folder' ? 'Dossier' : 'Fichier'
+    const name = (v: { old: unknown; new: unknown } | undefined, k: 'old' | 'new') => formatValue('title', v?.[k])
+    if (e.action === 'insert') {
+      const label = c.label?.new || c.url?.new || c.location?.new
+      return [`${what} ajouté : ${formatValue('title', label)}`]
+    }
+    if (e.action === 'delete') return [`${e.entity === 'link' ? 'Lien supprimé' : 'Pièce jointe supprimée'} : ${name(c.title, 'old')}`]
+    return [`${what} modifié`]
+  }
   if (e.entity === 'subtask') {
     if (e.action === 'insert') return [`Sous-tâche ajoutée : ${formatValue('title', c.title?.new)}`]
     if (e.action === 'delete') return [`Sous-tâche supprimée : ${formatValue('title', c.title?.old)}`]

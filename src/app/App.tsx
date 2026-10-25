@@ -4,6 +4,7 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { CalendarPage } from '@/features/calendar/CalendarPage'
+import { ContactsPage } from '@/features/contacts/ContactsPage'
 import { useSettings, useThemeSync } from '@/features/settings/api'
 import { SettingsPage } from '@/features/settings/SettingsPage'
 import { TasksPage } from '@/features/tasks/TasksPage'
@@ -52,6 +53,7 @@ function AuthGate() {
         <Route path="tasks" element={<TasksPage />} />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="contacts" element={<ContactsPage />} />
         <Route path="*" element={<Navigate to="/today" replace />} />
       </Route>
     </Routes>

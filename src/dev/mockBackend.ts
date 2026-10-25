@@ -39,6 +39,13 @@ const db: Record<string, Row[]> = {
   task_tags: [],
   settings: [],
   task_history: [],
+  contacts: [
+    { id: uuid(), user_id: USER_ID, name: 'Jean Dupuis', role: 'Plombier', company: 'Dupuis & Fils', phone: '06 12 34 56 78', email: 'jean@exemple.fr', notes: '', created_at: iso(-100), updated_at: iso(-100) },
+    { id: uuid(), user_id: USER_ID, name: 'Claire Martin', role: 'Cliente', company: '', phone: '07 00 00 00 00', email: '', notes: '', created_at: iso(-100), updated_at: iso(-100) },
+  ],
+  task_contacts: [],
+  links: [],
+  attachments: [],
 }
 const t0 = db.tasks[1].id
 db.subtasks.push(
@@ -53,6 +60,10 @@ const DEFAULTS: Record<string, () => Row> = {
   subtasks: () => ({ id: uuid(), user_id: USER_ID, done: false, done_at: null, due_at: null, position: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }),
   tags: () => ({ id: uuid(), user_id: USER_ID, color: '#64748b' }),
   task_tags: () => ({ user_id: USER_ID }),
+  contacts: () => ({ id: uuid(), user_id: USER_ID, role: '', company: '', phone: '', email: '', notes: '', created_at: new Date().toISOString() }),
+  task_contacts: () => ({ user_id: USER_ID, role_on_task: '', created_at: new Date().toISOString() }),
+  links: () => ({ id: uuid(), user_id: USER_ID, label: '', position: 0, created_at: new Date().toISOString() }),
+  attachments: () => ({ id: uuid(), user_id: USER_ID, label: '', storage_path: null, location: null, mime: null, size: null, created_at: new Date().toISOString() }),
   settings: () => ({ user_id: USER_ID, theme: 'dark', timezone: 'Europe/Paris', push_enabled: true, email_enabled: false, sms_enabled: false, notify_email: null, dnd_start: null, dnd_end: null, digest_enabled: false, digest_time: '07:30', ai_daily_limit: 50 }),
 }
 
@@ -79,6 +90,9 @@ function matches(row: Row, params: URLSearchParams): boolean {
 }
 
 function embed(table: string, row: Row, select: string): Row {
+  if (table === 'task_contacts' && select.includes('contacts')) {
+    return { ...row, contact: db.contacts.find((c) => c.id === row.contact_id) }
+  }
   if (table !== 'tasks') return row
   const out = { ...row }
   if (select.includes('subtasks')) out.subtasks = db.subtasks.filter((s) => s.task_id === row.id)
@@ -156,6 +170,9 @@ export function installMockBackend() {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
     if (url.pathname.includes('/rest/v1/')) return handle(url, init)
     if (url.pathname.includes('/auth/v1/')) return json({})
+    // Storage simulé : les fichiers ne sont pas conservés.
+    if (url.pathname.includes('/storage/v1/object/sign/')) return json({ signedURL: '/object/sign/demo?token=demo' })
+    if (url.pathname.includes('/storage/v1/')) return json({ Key: 'demo', Id: uuid() })
     return realFetch(input, init)
   }
   console.info('[mock] Backend de démonstration actif')
