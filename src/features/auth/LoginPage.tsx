@@ -67,7 +67,7 @@ export function LoginPage() {
               />
             </label>
             <button disabled={busy} className="min-h-12 w-full rounded-xl bg-accent font-semibold text-accent-fg disabled:opacity-50">
-              {busy ? 'Envoi…' : 'Recevoir un code de connexion'}
+              {busy ? 'Envoi…' : 'Recevoir un email de connexion'}
             </button>
           </form>
         ) : (
@@ -79,8 +79,9 @@ export function LoginPage() {
             }}
           >
             <p className="text-muted">
-              Un email a été envoyé à <strong className="text-fg">{email}</strong>. Cliquez sur le lien, ou saisissez le
-              code reçu :
+              Un email a été envoyé à <strong className="text-fg">{email}</strong>. Ouvrez le lien{' '}
+              <strong className="text-fg">sur cet appareil, dans ce navigateur</strong>, ou saisissez le code s’il y en
+              a un :
             </p>
             <input
               inputMode="numeric"
