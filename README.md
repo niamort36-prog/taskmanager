@@ -11,7 +11,7 @@ Webapp personnelle de gestion de tâches, **mobile first**, installable en PWA.
 | 1 | Setup, Auth, tâches et sous-tâches, vues, déploiement | ✅ |
 | 2 | Contacts, liens, dossiers, pièces jointes, Markdown | ✅ |
 | 3 | Rappels + notifications push | ✅ |
-| 4 | Emails (Resend) et SMS (Free Mobile) | ⏳ |
+| 4 | Emails (Resend/Brevo), SMS (Free Mobile), récapitulatif quotidien | ✅ |
 | 5 | Assistant IA (Gemini) | ⏳ |
 | 6 | PWA, hors ligne, finitions | ⏳ |
 
@@ -157,13 +157,35 @@ La migration de la phase 2 crée aussi le bucket Storage privé `attachments` (5
 
 > **iPhone** : les notifications push ne fonctionnent que si l'app est **installée sur l'écran d'accueil** (Safari → Partager → « Sur l'écran d'accueil », iOS 16.4 ou plus). L'écran Réglages l'explique.
 
-## 6. Tester sur votre téléphone
+## 6. Emails et SMS (phase 4)
+
+Les fournisseurs sont interchangeables (`supabase/functions/_shared/email.ts` et `sms.ts`). Leurs clés vont dans `supabase/.env.secrets` (ignoré par git), puis `npm run secrets:push`.
+
+### SMS : Free Mobile
+1. Espace abonné Free Mobile → **Mes options** → activez **Notifications par SMS**.
+2. Notez l'**identifiant** et la **clé** affichés.
+3. Ajoutez dans `supabase/.env.secrets` :
+   ```
+   FREE_MOBILE_USER=12345678
+   FREE_MOBILE_KEY=xxxxxxxxxxxxxx
+   ```
+4. L'API envoie **uniquement vers votre propre ligne**. Pour un autre destinataire, il faut Twilio : `SMS_PROVIDER=twilio`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`, `TWILIO_TO`.
+
+### Email : Resend (ou Brevo)
+- **Resend** : <https://resend.com> → API Keys → `RESEND_API_KEY=re_…`. Sans domaine vérifié, l'expéditeur est `onboarding@resend.dev` et les emails ne partent **que vers l'adresse de votre compte Resend**. Avec un domaine : `EMAIL_FROM=Mes tâches <rappels@votre-domaine.fr>`.
+- **Brevo** : <https://www.brevo.com> → SMTP & API → clé API → `BREVO_API_KEY=…`, et `EMAIL_FROM=Mes tâches <adresse-validée@…>` (une adresse validée dans « Expéditeurs »).
+- Si les deux sont présents, `EMAIL_PROVIDER=resend|brevo` choisit.
+
+### Dans l'app
+**Réglages → Canaux autorisés** : saisissez l'adresse email, activez Email et/ou SMS, puis **Tester**. Le **récapitulatif quotidien** (tâches du jour + retards) s'active juste en dessous, avec son heure d'envoi. Il n'est envoyé qu'une fois par jour, et pas du tout s'il n'y a rien.
+
+## 7. Tester sur votre téléphone
 
 - **Version déployée** : ouvrez <https://niamort36-prog.github.io/taskmanager/> dans Chrome (Android) ou Safari (iPhone).
 - **Version locale** : `npm run dev -- --host`, puis ouvrez `http://<IP-du-PC>:5173/taskmanager/` depuis le téléphone (même Wi-Fi). Ajoutez cette URL aux *Redirect URLs* Supabase si vous voulez utiliser le lien de l'email ; le code à 6 chiffres fonctionne dans tous les cas.
 - **Dans le navigateur du PC** : outils de développement (F12) → icône téléphone → *iPhone 12 Pro* (390 px), *Galaxy S8* (360 px), *iPhone 14 Pro Max* (430 px).
 
-## 7. Gestes et raccourcis
+## 8. Gestes et raccourcis
 
 | Geste | Effet |
 |---|---|
@@ -176,14 +198,14 @@ La migration de la phase 2 crée aussi le bucket Storage privé `attachments` (5
 | Boutons téléphone / bulle / enveloppe d'un contact | Appeler, SMS, email (tel:, sms:, mailto:) |
 | Toucher un chemin réseau | Le copie dans le presse-papiers (un navigateur ne peut pas l'ouvrir) |
 
-## 8. Secrets (phases suivantes)
+## 9. Secrets
 
 Tous les secrets vont dans **Supabase → Edge Functions → Secrets** (ou `npx supabase secrets set NOM=valeur`), jamais dans le dépôt :
 
 | Secret | Phase | Où l'obtenir |
 |---|---|---|
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `APP_URL` | 3 | `supabase/.env.secrets`, envoyé par `npm run secrets:push` |
-| `RESEND_API_KEY` | 4 | <https://resend.com> → API Keys |
+| `RESEND_API_KEY` ou `BREVO_API_KEY` (+ `EMAIL_FROM`) | 4 | voir section 6 |
 | `FREE_MOBILE_USER`, `FREE_MOBILE_KEY` | 4 | Espace abonné Free Mobile → *Mes options* → activer **Notifications par SMS** : l'identifiant et la clé s'affichent |
 | `GEMINI_API_KEY` | 5 | <https://aistudio.google.com/apikey> |
 

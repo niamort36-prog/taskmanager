@@ -348,18 +348,15 @@ function ReminderForm({ taskId, taskDue, subtasks, onDone }: Props & { onDone: (
         <div className="flex flex-wrap gap-2">
           {(['push', 'email', 'sms'] as const).map((c) => {
             const on = channels.includes(c)
-            const soon = c !== 'push'
             return (
               <button
                 key={c}
                 type="button"
                 aria-pressed={on}
-                disabled={soon}
                 onClick={() => setChannels(on ? channels.filter((x) => x !== c) : [...channels, c])}
-                className={`${chip(on)} disabled:opacity-40`}
+                className={chip(on)}
               >
                 {CHANNEL_LABEL[c]}
-                {soon && ' (phase 4)'}
               </button>
             )
           })}

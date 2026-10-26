@@ -17,6 +17,7 @@ export function NotificationSettings({ settings }: { settings: Settings | undefi
     <div className="space-y-3">
       <PushDeviceCard />
       <ChannelsCard settings={settings} />
+      <DigestCard settings={settings} />
       <DndCard settings={settings} />
       <LogCard />
     </div>
@@ -139,13 +140,117 @@ function Toggle({ on, onChange, label, disabled, hint }: { on: boolean; onChange
 
 function ChannelsCard({ settings }: { settings: Settings | undefined }) {
   const update = useUpdateSettings()
+  const toast = useToast()
+  const [email, setEmail] = useState('')
+  const [testing, setTesting] = useState<'email' | 'sms' | null>(null)
+  useEffect(() => setEmail(settings?.notify_email ?? ''), [settings?.notify_email])
   if (!settings) return null
+
+  const saveEmail = () => {
+    const v = email.trim()
+    if (v === (settings.notify_email ?? '')) return
+    if (v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) return toast('Adresse email invalide')
+    // Sans adresse, le canal email est coupé.
+    update.mutate(v ? { notify_email: v } : { notify_email: null, email_enabled: false, digest_enabled: false })
+  }
+
+  const test = async (channel: 'email' | 'sms') => {
+    setTesting(channel)
+    try {
+      await sendTestNotification(channel)
+      toast(channel === 'email' ? 'Email de test envoyé' : 'SMS de test envoyé')
+    } catch (e) {
+      toast(e instanceof Error ? e.message : String(e))
+    } finally {
+      setTesting(null)
+    }
+  }
+
+  const testBtn = (channel: 'email' | 'sms', enabled: boolean) =>
+    enabled && (
+      <button
+        disabled={testing !== null}
+        onClick={() => void test(channel)}
+        className="min-h-11 shrink-0 rounded-lg border border-accent px-3 text-accent disabled:opacity-50"
+      >
+        {testing === channel ? <Loader2 className="size-5 animate-spin" /> : 'Tester'}
+      </button>
+    )
+
   return (
-    <div className={card}>
+    <div className={`${card} space-y-1`}>
       <div className="mb-1 font-semibold">Canaux autorisés</div>
       <Toggle label="Notifications push" on={settings.push_enabled} onChange={(v) => update.mutate({ push_enabled: v })} />
-      <Toggle label="Email" on={settings.email_enabled} disabled hint="Disponible en phase 4" onChange={() => {}} />
-      <Toggle label="SMS (Free Mobile)" on={settings.sms_enabled} disabled hint="Disponible en phase 4" onChange={() => {}} />
+
+      <label className="block space-y-1 pt-2">
+        <span>Adresse pour les emails</span>
+        <input
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onBlur={saveEmail}
+          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+          placeholder="vous@exemple.fr"
+          className="min-h-11 w-full rounded-lg border border-line bg-surface-2 px-3"
+        />
+      </label>
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <Toggle
+            label="Email"
+            on={settings.email_enabled}
+            disabled={!settings.notify_email}
+            hint={settings.notify_email ? undefined : 'Renseignez d’abord une adresse'}
+            onChange={(v) => update.mutate({ email_enabled: v })}
+          />
+        </div>
+        {testBtn('email', settings.email_enabled)}
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <Toggle
+            label="SMS (Free Mobile)"
+            on={settings.sms_enabled}
+            hint="Envoyé sur votre propre ligne Free Mobile"
+            onChange={(v) => update.mutate({ sms_enabled: v })}
+          />
+        </div>
+        {testBtn('sms', settings.sms_enabled)}
+      </div>
+    </div>
+  )
+}
+
+/** Récapitulatif quotidien par email (tâches du jour + retards). */
+function DigestCard({ settings }: { settings: Settings | undefined }) {
+  const update = useUpdateSettings()
+  const [time, setTime] = useState('')
+  useEffect(() => setTime(settings?.digest_time?.slice(0, 5) ?? '07:30'), [settings?.digest_time])
+  if (!settings) return null
+  const possible = settings.email_enabled && Boolean(settings.notify_email)
+  return (
+    <div className={`${card} space-y-2`}>
+      <Toggle
+        label="Récapitulatif quotidien par email"
+        on={settings.digest_enabled && possible}
+        disabled={!possible}
+        hint={possible ? 'Tâches du jour et retards, une fois par jour (rien n’est envoyé s’il n’y a rien).' : 'Activez d’abord le canal email.'}
+        onChange={(v) => update.mutate({ digest_enabled: v })}
+      />
+      {settings.digest_enabled && possible && (
+        <label className="flex items-center gap-2">
+          <span>Heure d’envoi</span>
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            onBlur={() => time && time !== settings.digest_time?.slice(0, 5) && update.mutate({ digest_time: time })}
+            className="min-h-11 rounded-lg border border-line bg-surface-2 px-3"
+          />
+        </label>
+      )}
     </div>
   )
 }

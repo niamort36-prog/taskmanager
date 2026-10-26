@@ -426,5 +426,8 @@ enabled = true
 [functions.send-reminders]
 verify_jwt = false
 
+[functions.daily-digest]
+verify_jwt = false
+
 [functions.notify-test]
 verify_jwt = true
