@@ -228,13 +228,13 @@ Bouton **imprimante** en haut de « Toutes les tâches ».
 - **Imprimer / PDF** : la feuille sort en noir sur blanc quel que soit le thème. Sur téléphone, choisir « Enregistrer en PDF » dans la fenêtre d'impression.
 - **Partager** : envoie la liste en texte (SMS, WhatsApp, email…). **Copier** la met dans le presse-papiers.
 
-## 9. Version 1.1 : organisation et chantiers
+## 9. Version 1.1 : organisation, adresses, photos, temps passé
 
-- **Créer une tâche en une phrase** : dans la saisie rapide (bouton +), tapez ou dictez « Rappelle-moi d'appeler Jean demain à 9 h pour le devis », puis touchez **Analyser la phrase avec l'IA**. Titre, échéance, priorité, rappel, contact et sous-tâches sont proposés, et chacun peut être retiré avant d'ajouter. Les dates sont converties en heure de Paris côté serveur ; seuls les noms et rôles des contacts sont envoyés.
+- **Créer une tâche en une phrase** : dans la saisie rapide (bouton +), tapez ou dictez « Rappelle-moi d'appeler Jean demain à 9 h pour le devis », puis touchez **Analyser la phrase avec l'IA**. Titre, échéance, priorité, rappel, contact, adresse et sous-tâches sont proposés, et chacun peut être retiré avant d'ajouter. Les dates sont converties en heure de Paris côté serveur ; seuls les noms et rôles des contacts sont envoyés.
 - **Modèles de tâches** : dans une tâche, Sous-tâches → **Modèles**. Les modèles d'exemple sont « Nouveau chantier », « Devis client » et « Fin de chantier ». On peut aussi enregistrer les sous-tâches actuelles comme modèle. Gestion : Réglages → Modèles de tâches.
-- **Chantiers** (onglet du bas) : nom, adresse, couleur, notes, avancement, temps passé, boutons **Itinéraire** (Google Maps) et **Waze**, export du chantier. Une tâche se rattache à un chantier depuis son détail ; filtre et regroupement par chantier sont disponibles dans la liste et l'export.
+- **Adresse sur chaque tâche** (section Adresse du détail) : boutons **Itinéraire** (Google Maps) et **Waze**, copie. L'adresse apparaît en abrégé dans les listes, figure dans l'export et la recherche, et peut être extraite d'une phrase par l'IA (« passer chez Claire au 12 rue de la République à Lyon jeudi 14 h »).
 - **Photos** : bouton **Photo** (appareil photo arrière), photos compressées avant envoi (une photo de 6 Mo passe à environ 300 Ko), miniatures et affichage plein écran (glisser pour passer à la suivante).
-- **Temps passé** : chronomètre par tâche (un seul à la fois, bandeau visible partout tant qu'il tourne), saisie manuelle (15 min à 4 h), totaux par tâche et par chantier, option « Temps passé » dans l'export pour facturer.
+- **Temps passé** : chronomètre par tâche (un seul à la fois, bandeau visible partout tant qu'il tourne), saisie manuelle (15 min à 4 h), total par tâche, option « Temps passé » dans l'export pour facturer.
 - **Archives** : les tâches terminées depuis plus de 30 jours ne sont plus chargées dans la liste (Réglages → Archives).
 - **Corbeille** : restaurer ou supprimer définitivement, fichiers compris. Purge automatique chaque nuit après 30 jours, sauf pour les tâches qui ont des fichiers joints (Réglages → Corbeille).
 

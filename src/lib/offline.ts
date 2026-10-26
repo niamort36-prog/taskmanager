@@ -38,7 +38,7 @@ export interface TaskCreateVars {
   status?: 'todo' | 'in_progress' | 'blocked' | 'done'
   priority?: 1 | 2 | 3 | 4
   description?: string
-  project_id?: string | null
+  address?: string
 }
 export interface SubtaskAddVars {
   taskId: string

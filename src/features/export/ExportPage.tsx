@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, Copy, Printer, Share2 } from 'lucide-react'
-import { Link, useSearchParams } from 'react-router'
-import { useProjectMap } from '@/features/projects/api'
+import { Link } from 'react-router'
 import { formatMinutes, useTimeTotals } from '@/features/time/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { useToast } from '@/components/ui/Toast'
@@ -32,7 +31,9 @@ const DEFAULTS: ExportOptions = { scope: 'open', groupBy: 'due', subtasks: true,
 
 function loadOptions(): ExportOptions {
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(OPTIONS_KEY) ?? '{}') }
+    const saved = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(OPTIONS_KEY) ?? '{}') }
+    if (!(saved.groupBy in GROUP_LABEL)) saved.groupBy = 'due'
+    return saved
   } catch {
     return DEFAULTS
   }
@@ -106,21 +107,15 @@ export function ExportPage() {
 
   const set = (patch: Partial<ExportOptions>) => setO((cur) => ({ ...cur, ...patch }))
 
-  // Export d'un chantier (depuis sa fiche) : /export?project=<id>
-  const [params] = useSearchParams()
-  const projectId = params.get('project')
-  const projects = useProjectMap()
-  const project = projectId ? projects.get(projectId) : undefined
   const { data: totals } = useTimeTotals(o.time ? tasks.map((t) => t.id) : [], o.time)
 
   const groups = useMemo(() => {
-    const scoped = projectId ? tasks.filter((t) => t.project_id === projectId) : tasks
-    const selected = selectTasks(scoped, o.scope, listFilters()).map((t) => ({ ...t, extras: extras?.[t.id], minutes: totals?.[t.id] }))
-    return groupTasks(selected, o.groupBy, tags, projects)
-  }, [tasks, o.scope, o.groupBy, extras, tags, projects, projectId, totals])
+    const selected = selectTasks(tasks, o.scope, listFilters()).map((t) => ({ ...t, extras: extras?.[t.id], minutes: totals?.[t.id] }))
+    return groupTasks(selected, o.groupBy, tags)
+  }, [tasks, o.scope, o.groupBy, extras, tags, totals])
 
   const count = new Set(groups.flatMap((g) => g.tasks.map((t) => t.id))).size
-  const title = `${project ? `Chantier ${project.name}` : 'Mes tâches'} — ${SCOPE_LABEL[o.scope].toLowerCase()} — ${nowParis().toLocaleDateString('fr-FR', {
+  const title = `Mes tâches — ${SCOPE_LABEL[o.scope].toLowerCase()} — ${nowParis().toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -297,6 +292,7 @@ function PrintSheet({
                         {o.time && !!t.minutes && `${meta ? ' · ' : ''}⏱ ${formatMinutes(t.minutes)}`}
                       </div>
                     )}
+                    {t.address && <div className="text-sm text-[#333]">📍 {t.address}</div>}
                     {o.description && t.description.trim() && <p className="mt-1 whitespace-pre-line">{t.description.trim()}</p>}
                     {o.subtasks && !!t.extras?.subtasks.length && (
                       <ul className="mt-1 space-y-0.5">

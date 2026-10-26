@@ -19,7 +19,7 @@ const tags: Row[] = [
 function task(title: string, extra: Row = {}): Row {
   return {
     id: uuid(), user_id: USER_ID, title, description: '', notes_md: '', status: 'todo', priority: 2,
-    due_at: null, due_has_time: false, position: 0, completed_at: null, deleted_at: null,
+    due_at: null, due_has_time: false, position: 0, completed_at: null, deleted_at: null, address: '',
     created_at: iso(-48), updated_at: iso(-48), ...extra,
   }
 }
@@ -51,17 +51,14 @@ const db: Record<string, Row[]> = {
   attachments: [],
   reminders: [],
   task_templates: [],
-  projects: [],
   time_entries: [],
   push_subscriptions: [],
   notification_logs: [],
 }
 const t0 = db.tasks[1].id
-// Chantier d'exemple avec deux tâches
-const demoProject = { id: uuid(), user_id: USER_ID, name: 'Rénovation Martin', address: '12 rue de la République, Lyon', color: '#f97316', notes: 'Code portail 1234', archived: false, created_at: iso(-200), updated_at: iso(-200) }
-db.projects.push(demoProject)
-db.tasks[1].project_id = demoProject.id
-db.tasks[3].project_id = demoProject.id
+// Adresses d'exemple (itinéraire)
+db.tasks[1].address = '12 rue de la République, 69002 Lyon'
+db.tasks[3].address = '8 rue Victor Hugo, 69002 Lyon'
 db.subtasks.push(
   { id: uuid(), task_id: t0, user_id: USER_ID, title: 'Vérifier les métrés', done: true, due_at: null, position: 0, created_at: iso(-1), updated_at: iso(-1) },
   { id: uuid(), task_id: t0, user_id: USER_ID, title: 'Demander 3 devis', done: false, due_at: iso(28), position: 1, created_at: iso(-1), updated_at: iso(-1) },
@@ -82,7 +79,6 @@ const DEFAULTS: Record<string, () => Row> = {
   push_subscriptions: () => ({ id: uuid(), user_id: USER_ID }),
   time_entries: () => ({ id: uuid(), user_id: USER_ID, note: '', started_at: new Date().toISOString(), ended_at: null, created_at: new Date().toISOString() }),
   task_templates: () => ({ id: uuid(), user_id: USER_ID, subtasks: [], created_at: new Date().toISOString() }),
-  projects: () => ({ id: uuid(), user_id: USER_ID, address: '', color: '#0ea5e9', notes: '', archived: false, created_at: new Date().toISOString() }),
   notification_logs: () => ({}),
   attachments: () => ({ id: uuid(), user_id: USER_ID, label: '', storage_path: null, location: null, mime: null, size: null, created_at: new Date().toISOString() }),
   settings: () => ({ user_id: USER_ID, theme: 'dark', timezone: 'Europe/Paris', push_enabled: true, email_enabled: false, sms_enabled: false, notify_email: null, dnd_start: null, dnd_end: null, digest_enabled: false, digest_time: '07:30', ai_daily_limit: 50 }),
@@ -205,6 +201,7 @@ async function mockAi(body: { action: string }) {
         reminder: { mode: 'relative', offset_minutes: -15 },
         contact: { id: db.contacts[0].id, name: String(db.contacts[0].name) },
         subtasks: ['Préparer les métrés'],
+        address: '',
       },
       quota: { used: 4, daily_limit: 50 },
     })

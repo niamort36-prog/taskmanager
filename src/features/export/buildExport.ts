@@ -9,7 +9,7 @@ import { PRIORITIES, PRIORITY_LABEL, STATUS_LABEL, STATUS_ORDER } from '@/featur
 import type { Tag, TaskListItem } from '@/types/domain'
 
 export type Scope = 'open' | 'today' | 'week' | 'filters' | 'all'
-export type GroupBy = 'due' | 'status' | 'priority' | 'tag' | 'project'
+export type GroupBy = 'due' | 'status' | 'priority' | 'tag'
 
 export interface ExportOptions {
   scope: Scope
@@ -51,7 +51,6 @@ export const GROUP_LABEL: Record<GroupBy, string> = {
   status: 'Statut',
   priority: 'Priorité',
   tag: 'Étiquette',
-  project: 'Chantier',
 }
 
 export function selectTasks(tasks: TaskListItem[], scope: Scope, listFilters: TaskFilters | null): TaskListItem[] {
@@ -79,12 +78,7 @@ const DUE_GROUPS = [
   ['none', 'Sans échéance'],
 ] as const
 
-export function groupTasks(
-  tasks: ExportTask[],
-  by: GroupBy,
-  tags: Map<string, Tag>,
-  projects: Map<string, { name: string }> = new Map(),
-): ExportGroup[] {
+export function groupTasks(tasks: ExportTask[], by: GroupBy, tags: Map<string, Tag>): ExportGroup[] {
   const sorted = sortTasks(tasks)
   const groups: ExportGroup[] = []
   const push = (title: string, list: ExportTask[]) => list.length && groups.push({ title, tasks: list })
@@ -98,10 +92,6 @@ export function groupTasks(
     for (const s of STATUS_ORDER) push(STATUS_LABEL[s], sorted.filter((t) => t.status === s))
   } else if (by === 'priority') {
     for (const p of PRIORITIES) push(`Priorité ${PRIORITY_LABEL[p].toLowerCase()}`, sorted.filter((t) => t.priority === p))
-  } else if (by === 'project') {
-    const named = [...projects.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name, 'fr'))
-    for (const [id, p] of named) push(p.name, sorted.filter((t) => t.project_id === id))
-    push('Sans chantier', sorted.filter((t) => !t.project_id || !projects.has(t.project_id)))
   } else {
     // Une tâche peut apparaître sous plusieurs étiquettes.
     const named = [...tags.values()].sort((a, b) => a.name.localeCompare(b.name, 'fr'))
@@ -143,6 +133,7 @@ export function exportText(groups: ExportGroup[], o: ExportOptions, tags: Map<st
       const meta = metaLine(t, tags)
       const time = o.time && t.minutes ? ` — ${formatMinutes(t.minutes)}` : ''
       lines.push(`${t.status === 'done' ? '☑' : '☐'} ${t.title}${meta ? ` — ${meta}` : ''}${time}`)
+      if (t.address) lines.push(`   📍 ${t.address}`)
       if (o.description && t.description.trim()) lines.push(`   ${t.description.trim().replace(/\n+/g, ' ')}`)
       if (o.subtasks)
         for (const s of t.extras?.subtasks ?? [])

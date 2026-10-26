@@ -125,7 +125,7 @@ export function useCreateTask() {
         position: 0,
         completed_at: null,
         deleted_at: null,
-        project_id: null,
+        address: '',
         created_at: now,
         updated_at: now,
         ...input,

@@ -1,13 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown, History, Trash2, X } from 'lucide-react'
 import { appendText, DictationButton } from '@/components/ui/DictationButton'
+import { AddressField } from '@/components/ui/AddressField'
 import { DueField } from '@/components/ui/DueField'
 import { AiAssistant } from '@/features/ai/AiAssistant'
 import { AttachmentsSection } from '@/features/attachments/AttachmentsSection'
 import { TaskContactsSection } from '@/features/contacts/TaskContactsSection'
 import { HistoryList } from '@/features/history/HistoryList'
 import { LinksSection } from '@/features/links/LinksSection'
-import { ProjectSelect } from '@/features/projects/ProjectSelect'
 import { RemindersSection } from '@/features/reminders/RemindersSection'
 import { TimeSection } from '@/features/time/TimeSection'
 import { SubtaskList } from '@/features/subtasks/SubtaskList'
@@ -188,8 +188,8 @@ function TaskForm({ task }: { task: TaskDetailData }) {
         <DueField value={{ due_at: task.due_at, due_has_time: task.due_has_time }} onChange={(d) => save(d)} />
       </Section>
 
-      <Section title="Chantier">
-        <ProjectSelect value={task.project_id ?? null} onChange={(project_id) => save({ project_id })} />
+      <Section title="Adresse">
+        <AddressField value={task.address ?? ''} onSave={(address) => save({ address })} />
       </Section>
 
       <Section title="Temps passé">

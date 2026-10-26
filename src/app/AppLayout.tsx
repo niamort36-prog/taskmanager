@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
-import { CalendarDays, ListTodo, MapPin, Plus, Settings, Sparkles, Sun, Users } from 'lucide-react'
+import { CalendarDays, ListTodo, Plus, Settings, Sparkles, Sun, Users } from 'lucide-react'
 import { OfflineBanner } from '@/components/ui/OfflineBanner'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { useIsDesktop } from '@/lib/useMediaQuery'
@@ -12,7 +12,6 @@ import { RunningTimerBar } from '@/features/time/TimeSection'
 const NAV = [
   { to: '/today', label: "Aujourd'hui", icon: Sun },
   { to: '/tasks', label: 'Tâches', icon: ListTodo },
-  { to: '/projects', label: 'Chantiers', icon: MapPin },
   { to: '/calendar', label: 'Calendrier', icon: CalendarDays },
   { to: '/settings', label: 'Réglages', icon: Settings },
 ]
@@ -65,7 +64,7 @@ export function AppLayout() {
 function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-safe backdrop-blur">
-      <ul className="mx-auto grid max-w-xl grid-cols-5">
+      <ul className="mx-auto grid max-w-xl grid-cols-4">
         {NAV.map(({ to, label, icon: Icon }) => (
           <li key={to}>
             <NavLink
@@ -99,7 +98,7 @@ function Sidebar() {
       >
         <Plus className="size-5" /> Nouvelle tâche
       </button>
-      {[...NAV.slice(0, 4), { to: '/plan', label: 'Plan IA', icon: Sparkles }, { to: '/contacts', label: 'Contacts', icon: Users }, NAV[4]].map(({ to, label, icon: Icon }) => (
+      {[...NAV.slice(0, 3), { to: '/plan', label: 'Plan IA', icon: Sparkles }, { to: '/contacts', label: 'Contacts', icon: Users }, NAV[3]].map(({ to, label, icon: Icon }) => (
         <NavLink
           key={to}
           to={to}

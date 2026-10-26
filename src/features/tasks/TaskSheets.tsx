@@ -4,7 +4,7 @@
  */
 import { useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Bell, CalendarClock, Check, ListChecks, Loader2, Plus, Sparkles, Trash2, User, X } from 'lucide-react'
+import { Bell, CalendarClock, Check, ListChecks, Loader2, MapPin, Plus, Sparkles, Trash2, User, X } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { appendText, DictationButton } from '@/components/ui/DictationButton'
@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/Toast'
 import { useInvokeAi, type ParsedTask } from '@/features/ai/api'
 import { offsetLabel } from '@/features/reminders/describe'
 import { formatDue, fromInputValue, postponeOptions, type Due } from '@/lib/dates'
+import { shortAddress } from '@/lib/maps'
 import { qk } from '@/lib/queryClient'
 import { supabase, unwrap } from '@/lib/supabase'
 import { useCreateTask, useTasks } from './api'
@@ -52,7 +53,7 @@ export function QuickAddSheet() {
       const p = await invokeAi<ParsedTask>({ action: 'parse_task', text: title })
       setTitle(p.title)
       setDue({ due_at: p.due_at, due_has_time: p.due_has_time })
-      setExtras({ priority: p.priority, description: p.description, reminder: p.reminder, contact: p.contact, subtasks: p.subtasks })
+      setExtras({ priority: p.priority, description: p.description, reminder: p.reminder, contact: p.contact, subtasks: p.subtasks, address: p.address ?? '' })
     } catch (e) {
       setAiError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -66,7 +67,7 @@ export function QuickAddSheet() {
     const x = extras
     // Ajout immédiat (même hors ligne) ; l'envoi au serveur suit. Les
     // compléments proposés par l'IA sont enregistrés une fois la tâche créée.
-    const id = create.create({ title: t, ...due, priority: x.priority, description: x.description || undefined }, (taskId) => {
+    const id = create.create({ title: t, ...due, priority: x.priority, description: x.description || undefined, address: x.address || undefined }, (taskId) => {
       if (!hasAny(x)) return
       saveExtras(taskId, x, due.due_at).then(
         () => {
@@ -150,6 +151,11 @@ export function QuickAddSheet() {
                 <ListChecks className="size-4" /> {extras.subtasks.length} sous-tâche{extras.subtasks.length > 1 ? 's' : ''}
               </ExtraChip>
             )}
+            {extras.address && (
+              <ExtraChip onRemove={() => setExtras({ ...extras, address: '' })}>
+                <MapPin className="size-4" /> {shortAddress(extras.address)}
+              </ExtraChip>
+            )}
             {extras.description && (
               <ExtraChip onRemove={() => setExtras({ ...extras, description: '' })}>Description</ExtraChip>
             )}
@@ -191,10 +197,11 @@ interface Extras {
   reminder: ParsedTask['reminder']
   contact: ParsedTask['contact']
   subtasks: string[]
+  address: string
 }
-const NO_EXTRAS: Extras = { priority: 2, description: '', reminder: null, contact: null, subtasks: [] }
+const NO_EXTRAS: Extras = { priority: 2, description: '', reminder: null, contact: null, subtasks: [], address: '' }
 const hasAny = (x: Extras) =>
-  x.priority !== 2 || Boolean(x.reminder || x.contact || x.subtasks.length || x.description)
+  x.priority !== 2 || Boolean(x.reminder || x.contact || x.subtasks.length || x.description || x.address)
 
 function ExtraChip({ children, onRemove }: { children: ReactNode; onRemove: () => void }) {
   return (

@@ -8,8 +8,6 @@ export interface TaskFilters {
   statuses: TaskStatus[]
   priorities: Priority[]
   tagIds: string[]
-  /** Chantiers ; 'none' = tâches sans chantier. */
-  projectIds: string[]
   due: DueFilter
   showDone: boolean
 }
@@ -19,14 +17,13 @@ export const EMPTY_FILTERS: TaskFilters = {
   statuses: [],
   priorities: [],
   tagIds: [],
-  projectIds: [],
   due: 'all',
   showDone: false,
 }
 
 /** Nombre de filtres actifs (hors recherche), pour le badge du bouton. */
 export const activeFilterCount = (f: TaskFilters) =>
-  f.statuses.length + f.priorities.length + f.tagIds.length + (f.projectIds?.length ?? 0) + (f.due !== 'all' ? 1 : 0) + (f.showDone ? 1 : 0)
+  f.statuses.length + f.priorities.length + f.tagIds.length + (f.due !== 'all' ? 1 : 0) + (f.showDone ? 1 : 0)
 
 /** Minuscules sans accents, pour une recherche tolérante ("echeance" trouve "échéance"). */
 export const fold = (s: string) =>
@@ -43,12 +40,11 @@ export function applyFilters(tasks: TaskListItem[], f: TaskFilters): TaskListIte
     if (f.statuses.length && !f.statuses.includes(t.status)) return false
     if (f.priorities.length && !f.priorities.includes(t.priority)) return false
     if (f.tagIds.length && !f.tagIds.some((id) => t.tag_ids.includes(id))) return false
-    if (f.projectIds?.length && !f.projectIds.includes(t.project_id ?? 'none')) return false
     if (f.due !== 'all') {
       const b = dueBucket(t.due_at, now)
       if (f.due === 'week' ? !(b === 'today' || b === 'week') : b !== f.due) return false
     }
-    if (q && !fold(`${t.title} ${t.description} ${t.notes_md}`).includes(q)) return false
+    if (q && !fold(`${t.title} ${t.description} ${t.notes_md} ${t.address ?? ''}`).includes(q)) return false
     return true
   })
 }

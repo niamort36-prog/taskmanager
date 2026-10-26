@@ -43,6 +43,7 @@ export interface ParsedTask {
   reminder: { mode: 'absolute'; remind_at: string } | { mode: 'relative'; offset_minutes: number } | null
   contact: { id: string; name: string } | null
   subtasks: string[]
+  address: string
 }
 
 const quotaKey = ['ai-quota'] as const
