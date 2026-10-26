@@ -10,9 +10,12 @@ export const isSupabaseConfigured = Boolean(url && anonKey)
 // `||` et non `??` : en CI, une variable absente vaut "" (chaîne vide).
 export const supabase = createClient(url || 'http://localhost', anonKey || 'missing', {
   auth: {
-    // PKCE : le lien magique revient avec ?code=... (et non #access_token=...),
-    // ce qui est compatible avec le HashRouter.
-    flowType: 'pkce',
+    // Flux "implicit" : le lien magique revient avec #access_token=... et
+    // fonctionne quel que soit le navigateur qui l'ouvre (Gmail, Chrome,
+    // Safari…). Le flux PKCE exigerait le même navigateur que la demande,
+    // ce qui échoue souvent sur téléphone. Le hash est lu et nettoyé avant
+    // que le HashRouter n'affiche une route (voir AuthProvider).
+    flowType: 'implicit',
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,

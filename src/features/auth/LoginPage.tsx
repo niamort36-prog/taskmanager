@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './AuthProvider'
 
 /**
  * Connexion sans mot de passe :
@@ -12,7 +13,8 @@ export function LoginPage() {
   const [code, setCode] = useState('')
   const [step, setStep] = useState<'email' | 'code'>('email')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { linkError } = useAuth()
+  const [error, setError] = useState<string | null>(linkError)
 
   const sendEmail = async () => {
     setBusy(true)
@@ -79,9 +81,8 @@ export function LoginPage() {
             }}
           >
             <p className="text-muted">
-              Un email a été envoyé à <strong className="text-fg">{email}</strong>. Ouvrez le lien{' '}
-              <strong className="text-fg">sur cet appareil, dans ce navigateur</strong>, ou saisissez le code s’il y en
-              a un :
+              Un email a été envoyé à <strong className="text-fg">{email}</strong>. Touchez le lien qu’il contient
+              (depuis ce téléphone ou cet ordinateur), ou saisissez le code reçu :
             </p>
             <input
               inputMode="numeric"
