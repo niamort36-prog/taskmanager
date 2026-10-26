@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronLeft, Search, Trash2, UserPlus } from 'lucide-react'
 import { Link } from 'react-router'
+import { ALPHABET, AlphabetIndex, letterOf } from '@/components/ui/AlphabetIndex'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { useToast } from '@/components/ui/Toast'
@@ -19,8 +20,27 @@ export function ContactsPage() {
 
   const list = useMemo(() => {
     const f = fold(q.trim())
-    return (contacts ?? []).filter((c) => !f || fold(`${c.name} ${c.role} ${c.company} ${c.email} ${c.phone}`).includes(f))
+    return (contacts ?? [])
+      .filter((c) => !f || fold(`${c.name} ${c.role} ${c.company} ${c.email} ${c.phone}`).includes(f))
+      // Tri "à la française" : accents et majuscules ignorés (Émilie avec les E).
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base', numeric: true }))
   }, [contacts, q])
+
+  // Regroupement par initiale, "#" (chiffres, symboles) en dernier.
+  const groups = useMemo(() => {
+    const map = new Map<string, Contact[]>()
+    for (const c of list) {
+      const l = letterOf(c.name)
+      map.set(l, [...(map.get(l) ?? []), c])
+    }
+    return ALPHABET.filter((l) => map.has(l)).map((l) => ({ letter: l, items: map.get(l)! }))
+  }, [list])
+
+  const jumpTo = (letter: string) =>
+    document.getElementById(`lettre-${letter}`)?.scrollIntoView({ block: 'start' })
+
+  // L'index n'est utile que pour une liste un peu longue et sans recherche.
+  const showIndex = !q.trim() && list.length >= 8
 
   return (
     <>
@@ -55,20 +75,34 @@ export function ContactsPage() {
         {contacts && !list.length && (
           <p className="py-10 text-center text-muted">{contacts.length ? 'Aucun résultat.' : 'Aucun contact pour l’instant.'}</p>
         )}
-        <ul className="space-y-2">
-          {list.map((c) => (
-            <li key={c.id} className="flex items-center gap-2 rounded-xl border border-line bg-surface p-2">
-              <button onClick={() => setEditing(c)} className="min-h-11 min-w-0 flex-1 px-1 text-left">
-                <span className="block truncate font-medium">{c.name}</span>
-                {(c.role || c.company) && (
-                  <span className="block truncate text-muted">{[c.role, c.company].filter(Boolean).join(' · ')}</span>
-                )}
-              </button>
-              <ContactActions contact={c} />
-            </li>
+        <div className={`space-y-4 ${showIndex ? 'pr-7' : ''}`}>
+          {groups.map((g) => (
+            <section key={g.letter} aria-labelledby={`lettre-${g.letter}`}>
+              <h2
+                id={`lettre-${g.letter}`}
+                // Décalage : la lettre ne passe pas sous l'en-tête collant.
+                className="mb-1 scroll-mt-[calc(env(safe-area-inset-top)+8.5rem)] px-1 text-lg font-bold text-accent"
+              >
+                {g.letter}
+              </h2>
+              <ul className="space-y-2">
+                {g.items.map((c) => (
+                  <li key={c.id} className="flex items-center gap-2 rounded-xl border border-line bg-surface p-2">
+                    <button onClick={() => setEditing(c)} className="min-h-11 min-w-0 flex-1 px-1 text-left">
+                      <span className="block truncate font-medium">{c.name}</span>
+                      {(c.role || c.company) && (
+                        <span className="block truncate text-muted">{[c.role, c.company].filter(Boolean).join(' · ')}</span>
+                      )}
+                    </button>
+                    <ContactActions contact={c} />
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       </div>
+      {showIndex && <AlphabetIndex available={new Set(groups.map((g) => g.letter))} onSelect={jumpTo} />}
 
       <BottomSheet open={editing !== null} onClose={() => setEditing(null)} title="Contact">
         {editing !== null && (

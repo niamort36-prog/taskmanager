@@ -42,6 +42,9 @@ const db: Record<string, Row[]> = {
   contacts: [
     { id: uuid(), user_id: USER_ID, name: 'Jean Dupuis', role: 'Plombier', company: 'Dupuis & Fils', phone: '06 12 34 56 78', email: 'jean@exemple.fr', notes: '', created_at: iso(-100), updated_at: iso(-100) },
     { id: uuid(), user_id: USER_ID, name: 'Claire Martin', role: 'Cliente', company: '', phone: '07 00 00 00 00', email: '', notes: '', created_at: iso(-100), updated_at: iso(-100) },
+    ...['Émilie Bernard', 'Antoine Roux', 'Bruno Petit', 'Céline Moreau', 'David Laurent', 'Hugo Simon', 'Inès Michel', 'Karim Lefèvre', 'Léa Garcia', 'Nicolas Faure', 'Paul André', 'Sophie Mercier', 'Thomas Blanc', 'Yann Guerin', '3D Bâtiment'].map((name) => ({
+      id: uuid(), user_id: USER_ID, name, role: 'Artisan', company: '', phone: '06 00 00 00 00', email: '', notes: '', created_at: iso(-100), updated_at: iso(-100),
+    })),
   ],
   task_contacts: [],
   links: [],
