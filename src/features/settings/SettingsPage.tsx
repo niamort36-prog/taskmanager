@@ -1,10 +1,11 @@
-import { Archive, ChevronRight, LayoutTemplate, LogOut, Moon, Sun, Trash2, Users } from 'lucide-react'
+import { Archive, BarChart3, ChevronRight, LayoutTemplate, LogOut, Moon, Sun, Trash2, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { useSettings, useUpdateSettings } from './api'
 import { BackupCard } from './BackupCard'
+import { CalendarFeedCard } from './CalendarFeedCard'
 import { NotificationSettings } from './NotificationSettings'
 
 export function SettingsPage() {
@@ -37,6 +38,11 @@ export function SettingsPage() {
 
         <section className="space-y-2">
           <h2 className="font-semibold text-muted">Données</h2>
+          <Link to="/stats" className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-surface px-3">
+            <BarChart3 className="size-5 text-accent" />
+            <span className="flex-1">Statistiques</span>
+            <ChevronRight className="size-5 text-muted" />
+          </Link>
           <Link
             to="/contacts"
             className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-surface px-3"
@@ -61,6 +67,11 @@ export function SettingsPage() {
             <ChevronRight className="size-5 text-muted" />
           </Link>
           <BackupCard />
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="font-semibold text-muted">Agenda</h2>
+          <CalendarFeedCard settings={settings} />
         </section>
 
         <section className="space-y-2">

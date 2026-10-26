@@ -65,6 +65,14 @@ db.subtasks.push(
   { id: uuid(), task_id: t0, user_id: USER_ID, title: 'Valider avec le client', done: false, due_at: null, position: 2, created_at: iso(-1), updated_at: iso(-1) },
 )
 db.task_contacts.push({ task_id: t0, contact_id: db.contacts[0].id, user_id: USER_ID, role_on_task: 'Fournisseur', created_at: iso(-1) })
+// Historique pour les statistiques : tâches terminées et temps passé sur 12 semaines.
+;[5, 9, 12, 20, 30, 33, 40, 47, 52, 60, 61, 66, 75, 80].forEach((d, i) =>
+  db.tasks.push(task(`Tâche terminée n°${i + 1}`, { status: 'done', created_at: iso(-24 * (d + 4)), due_at: iso(-24 * (d - (i % 3))), completed_at: iso(-24 * d) })),
+)
+;[1, 2, 4, 8, 9, 15, 16, 23, 29, 37, 44, 51].forEach((d, i) => {
+  const start = iso(-24 * d)
+  db.time_entries.push({ id: uuid(), user_id: USER_ID, task_id: db.tasks[(i % 3) + 1].id, note: '', started_at: start, ended_at: new Date(Date.parse(start) + (45 + (i % 4) * 30) * 60_000).toISOString(), created_at: start })
+})
 db.task_tags.push({ task_id: t0, tag_id: tags[0].id, user_id: USER_ID }, { task_id: db.tasks[2].id, tag_id: tags[1].id, user_id: USER_ID })
 
 const DEFAULTS: Record<string, () => Row> = {
@@ -81,7 +89,7 @@ const DEFAULTS: Record<string, () => Row> = {
   task_templates: () => ({ id: uuid(), user_id: USER_ID, subtasks: [], created_at: new Date().toISOString() }),
   notification_logs: () => ({}),
   attachments: () => ({ id: uuid(), user_id: USER_ID, label: '', storage_path: null, location: null, mime: null, size: null, created_at: new Date().toISOString() }),
-  settings: () => ({ user_id: USER_ID, theme: 'dark', timezone: 'Europe/Paris', push_enabled: true, email_enabled: false, sms_enabled: false, notify_email: null, dnd_start: null, dnd_end: null, digest_enabled: false, digest_time: '07:30', weekly_plan_enabled: false, weekly_plan_time: '07:00', last_weekly_plan_on: null, ai_daily_limit: 50 }),
+  settings: () => ({ user_id: USER_ID, theme: 'dark', timezone: 'Europe/Paris', push_enabled: true, email_enabled: false, sms_enabled: false, notify_email: null, dnd_start: null, dnd_end: null, digest_enabled: false, digest_time: '07:30', weekly_plan_enabled: false, weekly_plan_time: '07:00', last_weekly_plan_on: null, calendar_token: null, ai_daily_limit: 50 }),
 }
 
 function parseValue(v: string): unknown {
@@ -285,6 +293,11 @@ export function installMockBackend() {
   const realFetch = window.fetch.bind(window)
   window.fetch = async (input, init = {}) => {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
+    if (url.pathname.endsWith('/rest/v1/rpc/rotate_calendar_token')) {
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('')
+      db.settings.forEach((s) => (s.calendar_token = token))
+      return json(token)
+    }
     if (url.pathname.includes('/rest/v1/')) return handle(url, init)
     if (url.pathname.includes('/auth/v1/')) return json({})
     if (url.pathname.endsWith('/rest/v1/rpc/ai_quota')) return json([{ used: 2, daily_limit: 50, last_minute: 0 }])

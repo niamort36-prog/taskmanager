@@ -244,6 +244,12 @@ Bouton **imprimante** en haut de « Toutes les tâches ».
 - **Plan de la semaine par email** : Réglages → Notifications → **Plan de la semaine par email** (canal email requis). Chaque lundi à l'heure choisie (07:00 par défaut), l'IA analyse les tâches en cours et envoie priorités, plan d'action et conseils. Le bouton **Recevoir maintenant** l'envoie tout de suite. L'envoi passe par la fonction `weekly-plan`, appelée par pg_cron (`*/15 * * * 1`, un seul envoi par lundi) ; chaque plan compte pour un appel IA du jour.
 - **Sauvegarde** : Réglages → Données → **Fichier complet** (JSON de toutes les tables : tâches, sous-tâches, contacts, rappels, temps passé, modèles…) ou **Tableau Excel** (CSV, une ligne par tâche, dates au format français). Sur téléphone, le fichier passe par le menu Partager (Drive, email…). Les fichiers joints restent stockés en ligne.
 
+## 9 ter. Version 1.3 : agenda, partage, statistiques
+
+- **Abonnement agenda** : Réglages → Agenda → **Créer mon lien d'abonnement**, puis **Ajouter à Google Agenda** ou **iPhone, Mac ou Outlook**. Les tâches avec échéance (et celles terminées depuis moins de 30 jours, marquées ✓) apparaissent dans l'agenda, avec l'adresse et un lien vers la tâche. Le flux est servi par la fonction `calendar` (`?token=…`, jeton secret de 48 caractères, `verify_jwt = false`). **Nouveau lien** invalide l'ancien ; **Désactiver** le supprime. Google Agenda actualise avec un délai (jusqu'à quelques heures).
+- **Partager vers Mes tâches** (Android, app installée) : depuis Chrome, une autre app ou un SMS, menu **Partager** → **Tâches**. La saisie rapide s'ouvre avec le texte comme titre, et le lien éventuel est ajouté aux liens de la tâche. Le partage d'images n'est pas pris en charge. Sur iPhone, Safari ne permet pas aux PWA de recevoir des partages.
+- **Statistiques** : Réglages → Données → **Statistiques**. Terminées cette semaine, retards, part des tâches finies à temps, temps passé, tâches terminées et temps passé par semaine sur 12 semaines (toucher une barre affiche sa valeur), délai médian, et les tâches qui prennent le plus de temps.
+
 ## 10. Tester sur votre téléphone
 
 - **Version déployée** : ouvrez <https://niamort36-prog.github.io/taskmanager/> dans Chrome (Android) ou Safari (iPhone).

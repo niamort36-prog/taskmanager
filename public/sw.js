@@ -3,7 +3,7 @@
    - réception des notifications push et ouverture de la tâche au clic.
    Les données (tâches…) sont mises en cache par l'app elle-même (IndexedDB). */
 
-const SHELL = 'tm-shell-v2'
+const SHELL = 'tm-shell-v3'
 const ASSETS = 'tm-assets-v2'
 const KEEP = [SHELL, ASSETS]
 const SHELL_FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icons/icon-192.png', './icons/badge-96.png']
@@ -73,7 +73,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(networkFirst(request))
   } else if (url.pathname.includes('/assets/')) {
     event.respondWith(cacheFirst(request))
-  } else if (/\.(png|svg|webmanifest)$/.test(url.pathname)) {
+  } else if (url.pathname.endsWith('.webmanifest')) {
+    // Le manifest change avec les versions (partage, raccourcis) : réseau d'abord.
+    event.respondWith(fetch(request).catch(() => caches.match(request).then((c) => c ?? Response.error())))
+  } else if (/\.(png|svg)$/.test(url.pathname)) {
     event.respondWith(caches.match(request).then((c) => c ?? fetch(request)))
   }
 })

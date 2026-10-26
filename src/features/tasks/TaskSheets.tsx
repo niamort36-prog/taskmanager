@@ -2,9 +2,9 @@
  * Feuilles et barres globales liées aux tâches :
  * saisie rapide, report, actions groupées, détail (mobile).
  */
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Bell, CalendarClock, Check, ListChecks, Loader2, MapPin, Plus, Sparkles, Trash2, User, X } from 'lucide-react'
+import { Bell, CalendarClock, Check, Link2, ListChecks, Loader2, MapPin, Plus, Sparkles, Trash2, User, X } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { appendText, DictationButton } from '@/components/ui/DictationButton'
@@ -37,6 +37,15 @@ export function QuickAddSheet() {
   const [parsing, setParsing] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
 
+  // Partage reçu d'une autre app : titre proposé et lien joint.
+  const { shareDraft, clearShareDraft } = ui
+  useEffect(() => {
+    if (!shareDraft) return
+    setTitle(shareDraft.title)
+    setExtras({ ...NO_EXTRAS, link: shareDraft.link })
+    clearShareDraft()
+  }, [shareDraft, clearShareDraft])
+
   const close = () => {
     ui.setQuickAddOpen(false)
     setTitle('')
@@ -53,7 +62,7 @@ export function QuickAddSheet() {
       const p = await invokeAi<ParsedTask>({ action: 'parse_task', text: title })
       setTitle(p.title)
       setDue({ due_at: p.due_at, due_has_time: p.due_has_time })
-      setExtras({ priority: p.priority, description: p.description, reminder: p.reminder, contact: p.contact, subtasks: p.subtasks, address: p.address ?? '' })
+      setExtras((cur) => ({ priority: p.priority, description: p.description, reminder: p.reminder, contact: p.contact, subtasks: p.subtasks, address: p.address ?? '', link: cur.link }))
     } catch (e) {
       setAiError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -74,6 +83,7 @@ export function QuickAddSheet() {
           qc.invalidateQueries({ queryKey: qk.task(taskId) })
           qc.invalidateQueries({ queryKey: qk.reminders(taskId) })
           qc.invalidateQueries({ queryKey: qk.taskContacts(taskId) })
+          qc.invalidateQueries({ queryKey: qk.links(taskId) })
           qc.invalidateQueries({ queryKey: qk.tasks })
         },
         (e) => toast(`Compléments non enregistrés : ${(e as Error).message}`),
@@ -156,6 +166,11 @@ export function QuickAddSheet() {
                 <MapPin className="size-4" /> {shortAddress(extras.address)}
               </ExtraChip>
             )}
+            {extras.link && (
+              <ExtraChip onRemove={() => setExtras({ ...extras, link: null })}>
+                <Link2 className="size-4" /> <span className="max-w-48 truncate">{extras.link.label}</span>
+              </ExtraChip>
+            )}
             {extras.description && (
               <ExtraChip onRemove={() => setExtras({ ...extras, description: '' })}>Description</ExtraChip>
             )}
@@ -198,10 +213,11 @@ interface Extras {
   contact: ParsedTask['contact']
   subtasks: string[]
   address: string
+  link: { url: string; label: string } | null
 }
-const NO_EXTRAS: Extras = { priority: 2, description: '', reminder: null, contact: null, subtasks: [], address: '' }
+const NO_EXTRAS: Extras = { priority: 2, description: '', reminder: null, contact: null, subtasks: [], address: '', link: null }
 const hasAny = (x: Extras) =>
-  x.priority !== 2 || Boolean(x.reminder || x.contact || x.subtasks.length || x.description || x.address)
+  x.priority !== 2 || Boolean(x.reminder || x.contact || x.subtasks.length || x.description || x.address || x.link)
 
 function ExtraChip({ children, onRemove }: { children: ReactNode; onRemove: () => void }) {
   return (
@@ -219,6 +235,7 @@ async function saveExtras(taskId: string, x: Extras, dueAt: string | null) {
   if (x.subtasks.length)
     unwrap(await supabase.from('subtasks').insert(x.subtasks.map((title, position) => ({ task_id: taskId, title, position }))))
   if (x.contact) unwrap(await supabase.from('task_contacts').insert({ task_id: taskId, contact_id: x.contact.id }))
+  if (x.link) unwrap(await supabase.from('links').insert({ task_id: taskId, url: x.link.url, label: x.link.label }))
   const r = x.reminder
   if (r && (r.mode === 'absolute' || dueAt))
     unwrap(

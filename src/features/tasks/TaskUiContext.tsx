@@ -4,8 +4,9 @@
  * - sélection multiple (appui long) ;
  * - feuilles "Reporter" et "Nouvelle tâche".
  */
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useSearchParams } from 'react-router'
+import { takeShareDraft, type ShareDraft } from '@/lib/shareTarget'
 
 interface TaskUi {
   openTaskId: string | null
@@ -23,6 +24,9 @@ interface TaskUi {
 
   quickAddOpen: boolean
   setQuickAddOpen: (open: boolean) => void
+  /** Contenu partagé depuis une autre app, à reprendre dans la saisie rapide. */
+  shareDraft: ShareDraft | null
+  clearShareDraft: () => void
 }
 
 const Ctx = createContext<TaskUi | null>(null)
@@ -38,12 +42,15 @@ export function TaskUiProvider({ children }: { children: ReactNode }) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [postponeIds, setPostponeIds] = useState<string[] | null>(null)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [shareDraft, setShareDraft] = useState<ShareDraft | null>(null)
 
   const openTaskId = params.get('task')
 
   // Raccourci "Nouvelle tâche" de l'icône de l'app : #/today?new=1
   useEffect(() => {
     if (params.get('new') !== '1') return
+    const draft = takeShareDraft()
+    if (draft) setShareDraft(draft)
     setQuickAddOpen(true)
     setParams((p) => {
       const n = new URLSearchParams(p)
@@ -53,8 +60,12 @@ export function TaskUiProvider({ children }: { children: ReactNode }) {
   }, [params, setParams])
 
   // Changement d'onglet : on referme les feuilles et la sélection en cours.
+  // (pas au premier affichage : la saisie ouverte par ?new=1 doit rester ouverte).
   const { pathname } = useLocation()
+  const lastPath = useRef(pathname)
   useEffect(() => {
+    if (lastPath.current === pathname) return
+    lastPath.current = pathname
     setSelected(new Set())
     setPostponeIds(null)
     setQuickAddOpen(false)
@@ -104,8 +115,10 @@ export function TaskUiProvider({ children }: { children: ReactNode }) {
       closePostpone: () => setPostponeIds(null),
       quickAddOpen,
       setQuickAddOpen,
+      shareDraft,
+      clearShareDraft: () => setShareDraft(null),
     }),
-    [openTaskId, openTask, closeTask, selected, toggleSelected, postponeIds, quickAddOpen],
+    [openTaskId, openTask, closeTask, selected, toggleSelected, postponeIds, quickAddOpen, shareDraft],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

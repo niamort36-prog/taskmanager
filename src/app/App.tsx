@@ -27,6 +27,7 @@ const ExportPage = named(() => import('@/features/export/ExportPage'), 'ExportPa
 const TemplatesPage = named(() => import('@/features/templates/TemplatesPage'), 'TemplatesPage')
 const ArchivePage = named(() => import('@/features/tasks/ArchivePages'), 'ArchivePage')
 const TrashPage = named(() => import('@/features/tasks/ArchivePages'), 'TrashPage')
+const StatsPage = named(() => import('@/features/stats/StatsPage'), 'StatsPage')
 
 // HashRouter : les URL sont du type /taskmanager/#/tasks, ce qui fonctionne
 // sur GitHub Pages sans configuration serveur.
@@ -85,6 +86,7 @@ function AuthGate() {
         <Route path="templates" element={<Page><TemplatesPage /></Page>} />
         <Route path="archive" element={<Page><ArchivePage /></Page>} />
         <Route path="trash" element={<Page><TrashPage /></Page>} />
+        <Route path="stats" element={<Page><StatsPage /></Page>} />
         <Route path="*" element={<Navigate to="/today" replace />} />
       </Route>
     </Routes>

@@ -7,6 +7,9 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const isSupabaseConfigured = Boolean(url && anonKey)
 
+/** Adresse publique d'une Edge Function (liens à ouvrir hors de l'app). */
+export const functionUrl = (name: string) => `${(url || 'http://localhost').replace(/\/$/, '')}/functions/v1/${name}`
+
 // `||` et non `??` : en CI, une variable absente vaut "" (chaîne vide).
 export const supabase = createClient(url || 'http://localhost', anonKey || 'missing', {
   auth: {

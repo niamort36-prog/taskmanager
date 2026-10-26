@@ -82,6 +82,7 @@ export interface Settings {
   weekly_plan_enabled: boolean
   weekly_plan_time: string
   last_weekly_plan_on: string | null
+  calendar_token: string | null
   ai_daily_limit: number
 }
 

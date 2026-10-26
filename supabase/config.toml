@@ -437,3 +437,6 @@ verify_jwt = true
 
 [functions.weekly-plan]
 verify_jwt = false
+
+[functions.calendar]
+verify_jwt = false
