@@ -16,6 +16,8 @@ export interface Task {
   position: number
   completed_at: string | null
   deleted_at: string | null
+  /** Chantier / projet auquel la tâche appartient. */
+  project_id: string | null
   created_at: string
   updated_at: string
 }
@@ -80,7 +82,7 @@ export interface Settings {
 export type TaskPatch = Partial<
   Pick<
     Task,
-    'title' | 'description' | 'notes_md' | 'status' | 'priority' | 'due_at' | 'due_has_time' | 'deleted_at' | 'position'
+    'title' | 'description' | 'notes_md' | 'status' | 'priority' | 'due_at' | 'due_has_time' | 'deleted_at' | 'position' | 'project_id'
   >
 >
 

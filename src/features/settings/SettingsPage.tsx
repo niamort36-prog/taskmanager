@@ -1,4 +1,4 @@
-import { ChevronRight, LogOut, Moon, Sun, Users } from 'lucide-react'
+import { Archive, ChevronRight, LayoutTemplate, LogOut, Moon, Sun, Trash2, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { useAuth } from '@/features/auth/AuthProvider'
@@ -42,6 +42,21 @@ export function SettingsPage() {
           >
             <Users className="size-5 text-accent" />
             <span className="flex-1">Carnet de contacts</span>
+            <ChevronRight className="size-5 text-muted" />
+          </Link>
+          <Link to="/templates" className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-surface px-3">
+            <LayoutTemplate className="size-5 text-accent" />
+            <span className="flex-1">Modèles de tâches</span>
+            <ChevronRight className="size-5 text-muted" />
+          </Link>
+          <Link to="/archive" className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-surface px-3">
+            <Archive className="size-5 text-accent" />
+            <span className="flex-1">Archives (terminées depuis 30 jours)</span>
+            <ChevronRight className="size-5 text-muted" />
+          </Link>
+          <Link to="/trash" className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-surface px-3">
+            <Trash2 className="size-5 text-accent" />
+            <span className="flex-1">Corbeille</span>
             <ChevronRight className="size-5 text-muted" />
           </Link>
         </section>

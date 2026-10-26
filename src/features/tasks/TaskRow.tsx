@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useDrag } from '@use-gesture/react'
-import { Check, CalendarClock, ListChecks } from 'lucide-react'
+import { Check, CalendarClock, ListChecks, MapPin } from 'lucide-react'
+import { useProjectMap } from '@/features/projects/api'
 import type { Tag, TaskListItem } from '@/types/domain'
 import { DueBadge } from './DueBadge'
 import { PRIORITY_DOT, STATUS_CLASS, STATUS_LABEL } from './meta'
@@ -17,6 +18,7 @@ const LONG_PRESS_MS = 450
  * - appui long : sélection multiple.
  */
 export function TaskRow({ task, tags }: { task: TaskListItem; tags: Map<string, Tag> }) {
+  const projects = useProjectMap()
   const ui = useTaskUi()
   const actions = useTaskActions()
   const [dx, setDx] = useState(0)
@@ -68,6 +70,7 @@ export function TaskRow({ task, tags }: { task: TaskListItem; tags: Map<string, 
   const gesture = bind()
 
   const tagList = task.tag_ids.map((id) => tags.get(id)).filter((t): t is Tag => Boolean(t))
+  const project = task.project_id ? projects.get(task.project_id) : undefined
 
   return (
     <li className="relative overflow-hidden rounded-xl">
@@ -138,6 +141,12 @@ export function TaskRow({ task, tags }: { task: TaskListItem; tags: Map<string, 
               <span className="inline-flex items-center gap-1">
                 <ListChecks className="size-4" aria-hidden />
                 {task.subtask_done}/{task.subtask_total}
+              </span>
+            )}
+            {project && (
+              <span className="inline-flex min-w-0 items-center gap-1">
+                <MapPin className="size-4 shrink-0" style={{ color: project.color }} aria-hidden />
+                <span className="truncate">{project.name}</span>
               </span>
             )}
             {tagList.map((t) => (

@@ -1,15 +1,18 @@
-import { NavLink, Outlet } from 'react-router'
-import { CalendarDays, ListTodo, Plus, Settings, Sparkles, Sun, Users } from 'lucide-react'
+import { NavLink, Outlet, useLocation } from 'react-router'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { CalendarDays, ListTodo, MapPin, Plus, Settings, Sparkles, Sun, Users } from 'lucide-react'
 import { OfflineBanner } from '@/components/ui/OfflineBanner'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { useIsDesktop } from '@/lib/useMediaQuery'
 import { LazyTaskDetail as TaskDetail } from '@/features/tasks/LazyTaskDetail'
 import { BulkActionBar, Fab, PostponeSheet, QuickAddSheet, TaskDetailSheet } from '@/features/tasks/TaskSheets'
 import { useTaskUi } from '@/features/tasks/TaskUiContext'
+import { RunningTimerBar } from '@/features/time/TimeSection'
 
 const NAV = [
   { to: '/today', label: "Aujourd'hui", icon: Sun },
   { to: '/tasks', label: 'Tâches', icon: ListTodo },
+  { to: '/projects', label: 'Chantiers', icon: MapPin },
   { to: '/calendar', label: 'Calendrier', icon: CalendarDays },
   { to: '/settings', label: 'Réglages', icon: Settings },
 ]
@@ -22,6 +25,7 @@ const NAV = [
 export function AppLayout() {
   const desktop = useIsDesktop()
   const ui = useTaskUi()
+  const { pathname } = useLocation()
 
   return (
     <div className="flex min-h-dvh">
@@ -29,12 +33,17 @@ export function AppLayout() {
 
       <main className={`min-w-0 flex-1 ${desktop ? '' : 'pb-[calc(9rem+env(safe-area-inset-bottom))]'}`}>
         <OfflineBanner />
-        <Outlet />
+        <RunningTimerBar />
+        <ErrorBoundary resetKey={pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </main>
 
       {desktop && ui.openTaskId && (
         <aside className="sticky top-0 h-dvh w-[28rem] shrink-0 overflow-y-auto border-l border-line bg-surface pt-2">
-          <TaskDetail taskId={ui.openTaskId} onClose={ui.closeTask} variant="panel" />
+          <ErrorBoundary resetKey={ui.openTaskId}>
+            <TaskDetail taskId={ui.openTaskId} onClose={ui.closeTask} variant="panel" />
+          </ErrorBoundary>
         </aside>
       )}
 
@@ -56,7 +65,7 @@ export function AppLayout() {
 function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-safe backdrop-blur">
-      <ul className="mx-auto grid max-w-xl grid-cols-4">
+      <ul className="mx-auto grid max-w-xl grid-cols-5">
         {NAV.map(({ to, label, icon: Icon }) => (
           <li key={to}>
             <NavLink
@@ -90,7 +99,7 @@ function Sidebar() {
       >
         <Plus className="size-5" /> Nouvelle tâche
       </button>
-      {[...NAV.slice(0, 3), { to: '/plan', label: 'Plan IA', icon: Sparkles }, { to: '/contacts', label: 'Contacts', icon: Users }, NAV[3]].map(({ to, label, icon: Icon }) => (
+      {[...NAV.slice(0, 4), { to: '/plan', label: 'Plan IA', icon: Sparkles }, { to: '/contacts', label: 'Contacts', icon: Users }, NAV[4]].map(({ to, label, icon: Icon }) => (
         <NavLink
           key={to}
           to={to}

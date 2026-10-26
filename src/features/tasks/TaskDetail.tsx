@@ -7,9 +7,12 @@ import { AttachmentsSection } from '@/features/attachments/AttachmentsSection'
 import { TaskContactsSection } from '@/features/contacts/TaskContactsSection'
 import { HistoryList } from '@/features/history/HistoryList'
 import { LinksSection } from '@/features/links/LinksSection'
+import { ProjectSelect } from '@/features/projects/ProjectSelect'
 import { RemindersSection } from '@/features/reminders/RemindersSection'
+import { TimeSection } from '@/features/time/TimeSection'
 import { SubtaskList } from '@/features/subtasks/SubtaskList'
 import { TagPicker } from '@/features/tags/TagPicker'
+import { TemplatePicker } from '@/features/templates/TemplatePicker'
 import { formatDateTime } from '@/lib/dates'
 import type { TaskDetail as TaskDetailData } from '@/types/domain'
 import { useTask, useUpdateTask } from './api'
@@ -185,6 +188,14 @@ function TaskForm({ task }: { task: TaskDetailData }) {
         <DueField value={{ due_at: task.due_at, due_has_time: task.due_has_time }} onChange={(d) => save(d)} />
       </Section>
 
+      <Section title="Chantier">
+        <ProjectSelect value={task.project_id ?? null} onChange={(project_id) => save({ project_id })} />
+      </Section>
+
+      <Section title="Temps passé">
+        <TimeSection taskId={task.id} />
+      </Section>
+
       <Section title="Rappels">
         <RemindersSection taskId={task.id} taskDue={task.due_at} subtasks={task.subtasks} />
       </Section>
@@ -206,6 +217,7 @@ function TaskForm({ task }: { task: TaskDetailData }) {
 
       <Section title="Sous-tâches">
         <SubtaskList taskId={task.id} subtasks={task.subtasks} />
+        <TemplatePicker taskId={task.id} subtasks={task.subtasks} />
       </Section>
 
       <Section title="Assistant IA">

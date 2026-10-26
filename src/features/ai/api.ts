@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase, unwrap } from '@/lib/supabase'
 
-export type AiAction = 'draft_email' | 'reply_email' | 'next_steps' | 'breakdown' | 'plan'
+export type AiAction = 'draft_email' | 'reply_email' | 'next_steps' | 'breakdown' | 'plan' | 'parse_task'
 export type Tone = 'formel' | 'neutre' | 'direct'
 export type EmailKind = 'relance' | 'demande_info' | 'reponse' | 'libre'
 
@@ -30,6 +30,19 @@ interface AiPayload {
   received?: string
   horizon?: 'today' | 'week'
   context?: string
+  text?: string
+}
+
+/** Tâche extraite d'une phrase par l'IA (action parse_task). */
+export interface ParsedTask {
+  title: string
+  description: string
+  priority: 1 | 2 | 3 | 4
+  due_at: string | null
+  due_has_time: boolean
+  reminder: { mode: 'absolute'; remind_at: string } | { mode: 'relative'; offset_minutes: number } | null
+  contact: { id: string; name: string } | null
+  subtasks: string[]
 }
 
 const quotaKey = ['ai-quota'] as const

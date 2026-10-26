@@ -228,13 +228,23 @@ Bouton **imprimante** en haut de « Toutes les tâches ».
 - **Imprimer / PDF** : la feuille sort en noir sur blanc quel que soit le thème. Sur téléphone, choisir « Enregistrer en PDF » dans la fenêtre d'impression.
 - **Partager** : envoie la liste en texte (SMS, WhatsApp, email…). **Copier** la met dans le presse-papiers.
 
-## 9. Tester sur votre téléphone
+## 9. Version 1.1 : organisation et chantiers
+
+- **Créer une tâche en une phrase** : dans la saisie rapide (bouton +), tapez ou dictez « Rappelle-moi d'appeler Jean demain à 9 h pour le devis », puis touchez **Analyser la phrase avec l'IA**. Titre, échéance, priorité, rappel, contact et sous-tâches sont proposés, et chacun peut être retiré avant d'ajouter. Les dates sont converties en heure de Paris côté serveur ; seuls les noms et rôles des contacts sont envoyés.
+- **Modèles de tâches** : dans une tâche, Sous-tâches → **Modèles**. Les modèles d'exemple sont « Nouveau chantier », « Devis client » et « Fin de chantier ». On peut aussi enregistrer les sous-tâches actuelles comme modèle. Gestion : Réglages → Modèles de tâches.
+- **Chantiers** (onglet du bas) : nom, adresse, couleur, notes, avancement, temps passé, boutons **Itinéraire** (Google Maps) et **Waze**, export du chantier. Une tâche se rattache à un chantier depuis son détail ; filtre et regroupement par chantier sont disponibles dans la liste et l'export.
+- **Photos** : bouton **Photo** (appareil photo arrière), photos compressées avant envoi (une photo de 6 Mo passe à environ 300 Ko), miniatures et affichage plein écran (glisser pour passer à la suivante).
+- **Temps passé** : chronomètre par tâche (un seul à la fois, bandeau visible partout tant qu'il tourne), saisie manuelle (15 min à 4 h), totaux par tâche et par chantier, option « Temps passé » dans l'export pour facturer.
+- **Archives** : les tâches terminées depuis plus de 30 jours ne sont plus chargées dans la liste (Réglages → Archives).
+- **Corbeille** : restaurer ou supprimer définitivement, fichiers compris. Purge automatique chaque nuit après 30 jours, sauf pour les tâches qui ont des fichiers joints (Réglages → Corbeille).
+
+## 10. Tester sur votre téléphone
 
 - **Version déployée** : ouvrez <https://niamort36-prog.github.io/taskmanager/> dans Chrome (Android) ou Safari (iPhone).
 - **Version locale** : `npm run dev -- --host`, puis ouvrez `http://<IP-du-PC>:5173/taskmanager/` depuis le téléphone (même Wi-Fi). Ajoutez cette URL aux *Redirect URLs* Supabase si vous voulez utiliser le lien de l'email ; le code à 6 chiffres fonctionne dans tous les cas.
 - **Dans le navigateur du PC** : outils de développement (F12) → icône téléphone → *iPhone 12 Pro* (390 px), *Galaxy S8* (360 px), *iPhone 14 Pro Max* (430 px).
 
-## 10. Gestes et raccourcis
+## 11. Gestes et raccourcis
 
 | Geste | Effet |
 |---|---|
@@ -249,7 +259,7 @@ Bouton **imprimante** en haut de « Toutes les tâches ».
 | Boutons téléphone / bulle / enveloppe d'un contact | Appeler, SMS, email (tel:, sms:, mailto:) |
 | Toucher un chemin réseau | Le copie dans le presse-papiers (un navigateur ne peut pas l'ouvrir) |
 
-## 11. Secrets
+## 12. Secrets
 
 Tous les secrets vont dans **Supabase → Edge Functions → Secrets** (ou `npx supabase secrets set NOM=valeur`), jamais dans le dépôt :
 

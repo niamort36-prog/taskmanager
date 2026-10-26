@@ -37,6 +37,8 @@ export interface TaskCreateVars {
   due_has_time?: boolean
   status?: 'todo' | 'in_progress' | 'blocked' | 'done'
   priority?: 1 | 2 | 3 | 4
+  description?: string
+  project_id?: string | null
 }
 export interface SubtaskAddVars {
   taskId: string

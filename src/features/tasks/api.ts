@@ -5,6 +5,7 @@
  */
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { mk, type TaskCreateVars, type TaskUpdateVars } from '@/lib/offline'
+import { archiveCutoff } from './archive'
 import { supabase, unwrap } from '@/lib/supabase'
 import { qk } from '@/lib/queryClient'
 import type { Task, TaskDetail, TaskListItem, TaskPatch } from '@/types/domain'
@@ -35,6 +36,8 @@ async function fetchTasks(): Promise<TaskListItem[]> {
       .from('tasks')
       .select('*, subtasks(id, title, done, due_at), task_tags(tag_id)')
       .is('deleted_at', null)
+      // Archives : les tâches terminées depuis plus de 30 jours ne sont plus chargées ici.
+      .or(`status.neq.done,completed_at.gte.${archiveCutoff()}`)
       .order('created_at', { ascending: false }),
   )
   return rows.map(toListItem)
@@ -122,6 +125,7 @@ export function useCreateTask() {
         position: 0,
         completed_at: null,
         deleted_at: null,
+        project_id: null,
         created_at: now,
         updated_at: now,
         ...input,
@@ -135,9 +139,10 @@ export function useCreateTask() {
   })
   return {
     ...m,
-    create: (input: NewTask): string => {
+    /** `onSaved` est appelé une fois la tâche enregistrée sur le serveur. */
+    create: (input: NewTask, onSaved?: (id: string) => void): string => {
       const id = crypto.randomUUID()
-      m.mutate({ ...input, id })
+      m.mutate({ ...input, id }, { onSuccess: () => onSaved?.(id) })
       return id
     },
   }

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useProjects } from '@/features/projects/api'
 import { useTags } from '@/features/tags/api'
 import type { DueFilter, TaskFilters } from './filters'
 import { EMPTY_FILTERS } from './filters'
@@ -33,6 +34,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
 
 export function FilterPanel({ value, onChange }: { value: TaskFilters; onChange: (f: TaskFilters) => void }) {
   const { data: tags } = useTags()
+  const { data: projects } = useProjects()
   const set = (patch: Partial<TaskFilters>) => onChange({ ...value, ...patch })
 
   return (
@@ -73,6 +75,28 @@ export function FilterPanel({ value, onChange }: { value: TaskFilters; onChange:
           ))}
         </div>
       </fieldset>
+
+      {!!projects?.length && (
+        <fieldset className="space-y-2">
+          <legend className="mb-2 font-semibold">Chantier</legend>
+          <div className="flex flex-wrap gap-2">
+            {projects
+              .filter((p) => !p.archived)
+              .map((p) => (
+                <Chip
+                  key={p.id}
+                  on={(value.projectIds ?? []).includes(p.id)}
+                  onClick={() => set({ projectIds: toggle(value.projectIds ?? [], p.id) })}
+                >
+                  <span className="size-2.5 rounded-full" style={{ background: p.color }} /> {p.name}
+                </Chip>
+              ))}
+            <Chip on={(value.projectIds ?? []).includes('none')} onClick={() => set({ projectIds: toggle(value.projectIds ?? [], 'none') })}>
+              Sans chantier
+            </Chip>
+          </div>
+        </fieldset>
+      )}
 
       {!!tags?.length && (
         <fieldset className="space-y-2">

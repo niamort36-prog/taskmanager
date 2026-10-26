@@ -4,6 +4,7 @@
 // quota quotidien + limite de 10 appels par minute.
 import { admin, json } from '../_shared/admin.ts'
 import { AiError, getAiProvider, type AiRequest } from '../_shared/ai/provider.ts'
+import { parseTaskPrompt, toParsedTask, type ContactRef } from '../_shared/ai/parseTask.ts'
 import {
   breakdownPrompt,
   draftEmailPrompt,
@@ -24,8 +25,8 @@ const cors = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-type Action = 'draft_email' | 'reply_email' | 'next_steps' | 'breakdown' | 'plan'
-const ACTIONS: Action[] = ['draft_email', 'reply_email', 'next_steps', 'breakdown', 'plan']
+type Action = 'draft_email' | 'reply_email' | 'next_steps' | 'breakdown' | 'plan' | 'parse_task'
+const ACTIONS: Action[] = ['draft_email', 'reply_email', 'next_steps', 'breakdown', 'plan', 'parse_task']
 const PLAN_CATEGORIES = ['urgent', 'important', 'rapide', 'bloquee', 'plus_tard']
 const PER_MINUTE = 10
 
@@ -39,6 +40,8 @@ interface Body {
   received?: string
   horizon?: Horizon
   context?: string
+  /** parse_task : la phrase à transformer en tâche. */
+  text?: string
 }
 
 Deno.serve(async (req) => {
@@ -62,6 +65,21 @@ Deno.serve(async (req) => {
   if (quota.last_minute >= PER_MINUTE) return reply({ error: 'Trop de demandes rapprochées, patientez une minute.', quota }, 429)
 
   try {
+    // Création en une phrase : contacts envoyés par nom/rôle uniquement.
+    if (body.action === 'parse_task') {
+      const text = body.text?.trim() ?? ''
+      if (text.length < 3) return reply({ error: 'Écrivez ou dictez une phrase.' }, 400)
+      const { data: rows } = await admin.from('contacts').select('id, name, role').eq('user_id', user.id).order('name').limit(300)
+      const contacts: ContactRef[] = (rows ?? []).map((c, i) => ({ ref: `C${i + 1}`, id: c.id, name: c.name, role: c.role }))
+      const provider = await getAiProvider()
+      const result = await provider.generateJson(parseTaskPrompt(text, contacts))
+      await admin.from('ai_usage').insert({
+        user_id: user.id, feature: 'parse_task', provider: provider.name, model: result.model,
+        tokens_in: result.tokensIn ?? null, tokens_out: result.tokensOut ?? null, ok: true,
+      })
+      return reply({ data: toParsedTask(result.data, contacts, text), quota: { ...quota, used: quota.used + 1 } })
+    }
+
     // Rapport global : toutes les tâches en cours.
     if (body.action === 'plan') {
       const { tasks, byRef } = await loadPlanTasks(user.id)

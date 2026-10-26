@@ -2,13 +2,14 @@
  * Préparation d'un export lisible des tâches (impression, PDF, partage) :
  * sélection, regroupement et version texte. Fonctions pures, sans UI.
  */
+import { formatMinutes } from '@/features/time/api'
 import { dueBucket, formatDue, nowParis } from '@/lib/dates'
 import { applyFilters, sortTasks, type TaskFilters } from '@/features/tasks/filters'
 import { PRIORITIES, PRIORITY_LABEL, STATUS_LABEL, STATUS_ORDER } from '@/features/tasks/meta'
 import type { Tag, TaskListItem } from '@/types/domain'
 
 export type Scope = 'open' | 'today' | 'week' | 'filters' | 'all'
-export type GroupBy = 'due' | 'status' | 'priority' | 'tag'
+export type GroupBy = 'due' | 'status' | 'priority' | 'tag' | 'project'
 
 export interface ExportOptions {
   scope: Scope
@@ -17,6 +18,7 @@ export interface ExportOptions {
   description: boolean
   notes: boolean
   contacts: boolean
+  time: boolean
 }
 
 /** Détails chargés pour l'export (sous-tâches complètes, contacts). */
@@ -27,6 +29,8 @@ export interface ExportExtras {
 
 export interface ExportTask extends TaskListItem {
   extras?: ExportExtras
+  /** Temps passé (minutes). */
+  minutes?: number
 }
 
 export interface ExportGroup {
@@ -47,6 +51,7 @@ export const GROUP_LABEL: Record<GroupBy, string> = {
   status: 'Statut',
   priority: 'Priorité',
   tag: 'Étiquette',
+  project: 'Chantier',
 }
 
 export function selectTasks(tasks: TaskListItem[], scope: Scope, listFilters: TaskFilters | null): TaskListItem[] {
@@ -74,7 +79,12 @@ const DUE_GROUPS = [
   ['none', 'Sans échéance'],
 ] as const
 
-export function groupTasks(tasks: ExportTask[], by: GroupBy, tags: Map<string, Tag>): ExportGroup[] {
+export function groupTasks(
+  tasks: ExportTask[],
+  by: GroupBy,
+  tags: Map<string, Tag>,
+  projects: Map<string, { name: string }> = new Map(),
+): ExportGroup[] {
   const sorted = sortTasks(tasks)
   const groups: ExportGroup[] = []
   const push = (title: string, list: ExportTask[]) => list.length && groups.push({ title, tasks: list })
@@ -88,6 +98,10 @@ export function groupTasks(tasks: ExportTask[], by: GroupBy, tags: Map<string, T
     for (const s of STATUS_ORDER) push(STATUS_LABEL[s], sorted.filter((t) => t.status === s))
   } else if (by === 'priority') {
     for (const p of PRIORITIES) push(`Priorité ${PRIORITY_LABEL[p].toLowerCase()}`, sorted.filter((t) => t.priority === p))
+  } else if (by === 'project') {
+    const named = [...projects.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name, 'fr'))
+    for (const [id, p] of named) push(p.name, sorted.filter((t) => t.project_id === id))
+    push('Sans chantier', sorted.filter((t) => !t.project_id || !projects.has(t.project_id)))
   } else {
     // Une tâche peut apparaître sous plusieurs étiquettes.
     const named = [...tags.values()].sort((a, b) => a.name.localeCompare(b.name, 'fr'))
@@ -127,7 +141,8 @@ export function exportText(groups: ExportGroup[], o: ExportOptions, tags: Map<st
     lines.push(`${g.title.toUpperCase()} (${g.tasks.length})`)
     for (const t of g.tasks) {
       const meta = metaLine(t, tags)
-      lines.push(`${t.status === 'done' ? '☑' : '☐'} ${t.title}${meta ? ` — ${meta}` : ''}`)
+      const time = o.time && t.minutes ? ` — ${formatMinutes(t.minutes)}` : ''
+      lines.push(`${t.status === 'done' ? '☑' : '☐'} ${t.title}${meta ? ` — ${meta}` : ''}${time}`)
       if (o.description && t.description.trim()) lines.push(`   ${t.description.trim().replace(/\n+/g, ' ')}`)
       if (o.subtasks)
         for (const s of t.extras?.subtasks ?? [])
@@ -138,6 +153,10 @@ export function exportText(groups: ExportGroup[], o: ExportOptions, tags: Map<st
       if (o.notes && t.notes_md.trim()) lines.push(...plainNotes(t.notes_md).split('\n').map((l) => `   ${l}`))
     }
     lines.push('')
+  }
+  if (o.time) {
+    const total = [...new Map(groups.flatMap((g) => g.tasks).map((t) => [t.id, t.minutes ?? 0])).values()].reduce((a, b) => a + b, 0)
+    if (total) lines.push(`Temps total : ${formatMinutes(total)}`)
   }
   return lines.join('\n').trim()
 }

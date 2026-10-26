@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Copy, ExternalLink, File, FileImage, FileText, Folder, FolderPlus, Loader2, Paperclip, Trash2 } from 'lucide-react'
+import { Camera, Copy, ExternalLink, File, FileImage, FileText, Folder, FolderPlus, Loader2, Paperclip, Trash2 } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { supabase, unwrap } from '@/lib/supabase'
 import { qk } from '@/lib/queryClient'
 import type { Attachment } from '@/types/domain'
+import { compressImage } from './compressImage'
+import { PhotoGrid } from './PhotoGrid'
 
 const BUCKET = 'attachments'
 const MAX_SIZE = 50 * 1024 * 1024 // limite de l'offre gratuite Supabase
@@ -102,6 +104,7 @@ export function AttachmentsSection({ taskId }: { taskId: string }) {
   const { list, upload, addFolder, remove } = useAttachments(taskId)
   const toast = useToast()
   const fileInput = useRef<HTMLInputElement>(null)
+  const photoInput = useRef<HTMLInputElement>(null)
   const [folderForm, setFolderForm] = useState(false)
   const [uploading, setUploading] = useState(0)
 
@@ -111,7 +114,8 @@ export function AttachmentsSection({ taskId }: { taskId: string }) {
     setUploading(arr.length)
     for (const f of arr) {
       try {
-        await upload.mutateAsync(f)
+        // Photos réduites avant envoi (plus rapide en 4G, stockage préservé).
+        await upload.mutateAsync(f.type.startsWith('image/') ? await compressImage(f) : f)
       } catch (e) {
         toast(e instanceof Error ? e.message : String(e))
       }
@@ -142,11 +146,17 @@ export function AttachmentsSection({ taskId }: { taskId: string }) {
     }
   }
 
+  // Les photos s'affichent en miniatures ; les autres pièces jointes en liste.
+  const isPhoto = (a: Attachment) => a.kind === 'file' && Boolean(a.mime?.startsWith('image/'))
+  const photos = (list.data ?? []).filter(isPhoto)
+  const others = (list.data ?? []).filter((a) => !isPhoto(a))
+
   return (
     <div className="space-y-2">
-      {!!list.data?.length && (
+      <PhotoGrid photos={photos} onDelete={(a) => remove.mutate(a)} />
+      {others.length > 0 && (
         <ul className="space-y-1">
-          {list.data.map((a) => {
+          {others.map((a) => {
             const Icon = iconFor(a)
             const web = a.kind === 'folder' && isWebUrl(a.location ?? '')
             return (
@@ -213,6 +223,13 @@ export function AttachmentsSection({ taskId }: { taskId: string }) {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
+            onClick={() => photoInput.current?.click()}
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-line px-4 text-muted"
+          >
+            <Camera className="size-5" /> Photo
+          </button>
+          <button
+            type="button"
             onClick={() => fileInput.current?.click()}
             className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-line px-4 text-muted"
           >
@@ -227,7 +244,19 @@ export function AttachmentsSection({ taskId }: { taskId: string }) {
           </button>
         </div>
       )}
-      {/* Sur téléphone, propose aussi l'appareil photo et les fichiers. */}
+      {/* Photo : ouvre directement l'appareil photo arrière du téléphone. */}
+      <input
+        ref={photoInput}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) => {
+          void onFiles(e.target.files)
+          e.target.value = ''
+        }}
+      />
+      {/* Fichier : galerie, documents, appareil photo… au choix. */}
       <input
         ref={fileInput}
         type="file"

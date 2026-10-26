@@ -24,6 +24,11 @@ const ContactsPage = named(() => import('@/features/contacts/ContactsPage'), 'Co
 const SettingsPage = named(() => import('@/features/settings/SettingsPage'), 'SettingsPage')
 const PlanPage = named(() => import('@/features/ai/PlanPage'), 'PlanPage')
 const ExportPage = named(() => import('@/features/export/ExportPage'), 'ExportPage')
+const TemplatesPage = named(() => import('@/features/templates/TemplatesPage'), 'TemplatesPage')
+const ArchivePage = named(() => import('@/features/tasks/ArchivePages'), 'ArchivePage')
+const ProjectsPage = named(() => import('@/features/projects/ProjectsPages'), 'ProjectsPage')
+const ProjectPage = named(() => import('@/features/projects/ProjectsPages'), 'ProjectPage')
+const TrashPage = named(() => import('@/features/tasks/ArchivePages'), 'TrashPage')
 
 // HashRouter : les URL sont du type /taskmanager/#/tasks, ce qui fonctionne
 // sur GitHub Pages sans configuration serveur.
@@ -79,6 +84,11 @@ function AuthGate() {
         <Route path="contacts" element={<Page><ContactsPage /></Page>} />
         <Route path="plan" element={<Page><PlanPage /></Page>} />
         <Route path="export" element={<Page><ExportPage /></Page>} />
+        <Route path="templates" element={<Page><TemplatesPage /></Page>} />
+        <Route path="archive" element={<Page><ArchivePage /></Page>} />
+        <Route path="projects" element={<Page><ProjectsPage /></Page>} />
+        <Route path="projects/:id" element={<Page><ProjectPage /></Page>} />
+        <Route path="trash" element={<Page><TrashPage /></Page>} />
         <Route path="*" element={<Navigate to="/today" replace />} />
       </Route>
     </Routes>

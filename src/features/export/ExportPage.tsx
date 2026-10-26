@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, Copy, Printer, Share2 } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
+import { useProjectMap } from '@/features/projects/api'
+import { formatMinutes, useTimeTotals } from '@/features/time/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { useToast } from '@/components/ui/Toast'
 import { useTasks } from '@/features/tasks/api'
@@ -26,7 +28,7 @@ import {
 } from './buildExport'
 
 const OPTIONS_KEY = 'export.options'
-const DEFAULTS: ExportOptions = { scope: 'open', groupBy: 'due', subtasks: true, description: true, notes: false, contacts: false }
+const DEFAULTS: ExportOptions = { scope: 'open', groupBy: 'due', subtasks: true, description: true, notes: false, contacts: false, time: false }
 
 function loadOptions(): ExportOptions {
   try {
@@ -104,13 +106,21 @@ export function ExportPage() {
 
   const set = (patch: Partial<ExportOptions>) => setO((cur) => ({ ...cur, ...patch }))
 
+  // Export d'un chantier (depuis sa fiche) : /export?project=<id>
+  const [params] = useSearchParams()
+  const projectId = params.get('project')
+  const projects = useProjectMap()
+  const project = projectId ? projects.get(projectId) : undefined
+  const { data: totals } = useTimeTotals(o.time ? tasks.map((t) => t.id) : [], o.time)
+
   const groups = useMemo(() => {
-    const selected = selectTasks(tasks, o.scope, listFilters()).map((t) => ({ ...t, extras: extras?.[t.id] }))
-    return groupTasks(selected, o.groupBy, tags)
-  }, [tasks, o.scope, o.groupBy, extras, tags])
+    const scoped = projectId ? tasks.filter((t) => t.project_id === projectId) : tasks
+    const selected = selectTasks(scoped, o.scope, listFilters()).map((t) => ({ ...t, extras: extras?.[t.id], minutes: totals?.[t.id] }))
+    return groupTasks(selected, o.groupBy, tags, projects)
+  }, [tasks, o.scope, o.groupBy, extras, tags, projects, projectId, totals])
 
   const count = new Set(groups.flatMap((g) => g.tasks.map((t) => t.id))).size
-  const title = `Mes tâches — ${SCOPE_LABEL[o.scope].toLowerCase()} — ${nowParis().toLocaleDateString('fr-FR', {
+  const title = `${project ? `Chantier ${project.name}` : 'Mes tâches'} — ${SCOPE_LABEL[o.scope].toLowerCase()} — ${nowParis().toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -184,6 +194,7 @@ export function ExportPage() {
                   ['description', 'Descriptions'],
                   ['notes', 'Notes'],
                   ['contacts', 'Contacts (tél.)'],
+                  ['time', 'Temps passé'],
                 ] as const
               ).map(([k, label]) => (
                 <label key={k} className="flex min-h-11 items-center gap-3">
@@ -254,6 +265,8 @@ function PrintSheet({
   options: ExportOptions
   tags: Map<string, Tag>
 }) {
+  // Chaque tâche comptée une fois, même si elle figure dans plusieurs groupes (étiquettes).
+  const totalMinutes = [...new Map(groups.flatMap((g) => g.tasks).map((t) => [t.id, t.minutes ?? 0])).values()].reduce((a, b) => a + b, 0)
   return (
     <article id="print-area" className="print-sheet rounded-xl bg-white p-5 text-[#111] shadow-lg">
       <header className="mb-4 border-b-2 border-[#111] pb-2">
@@ -278,7 +291,12 @@ function PrintSheet({
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className={`font-semibold ${t.status === 'done' ? 'text-[#777] line-through' : ''}`}>{t.title}</div>
-                    {meta && <div className="text-sm text-[#555]">{meta}</div>}
+                    {(meta || (o.time && !!t.minutes)) && (
+                      <div className="text-sm text-[#555]">
+                        {meta}
+                        {o.time && !!t.minutes && `${meta ? ' · ' : ''}⏱ ${formatMinutes(t.minutes)}`}
+                      </div>
+                    )}
                     {o.description && t.description.trim() && <p className="mt-1 whitespace-pre-line">{t.description.trim()}</p>}
                     {o.subtasks && !!t.extras?.subtasks.length && (
                       <ul className="mt-1 space-y-0.5">
@@ -312,6 +330,9 @@ function PrintSheet({
           </ul>
         </section>
       ))}
+      {o.time && totalMinutes > 0 && (
+        <p className="mt-4 border-t-2 border-[#111] pt-2 text-right font-bold">Temps total : {formatMinutes(totalMinutes)}</p>
+      )}
     </article>
   )
 }

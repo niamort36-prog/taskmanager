@@ -28,7 +28,7 @@ export function useTaskActions() {
 
     remove(ids: string[]) {
       apply(ids, { deleted_at: new Date().toISOString() })
-      toast(ids.length > 1 ? `${ids.length} tâches supprimées` : 'Tâche supprimée', {
+      toast(ids.length > 1 ? `${ids.length} tâches mises à la corbeille` : 'Tâche mise à la corbeille', {
         label: 'Annuler',
         onClick: () => apply(ids, { deleted_at: null }),
       })
