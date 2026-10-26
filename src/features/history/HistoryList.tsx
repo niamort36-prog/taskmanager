@@ -57,6 +57,8 @@ function describe(e: HistoryEntry): string[] {
   if (e.action === 'insert') return ['Tâche créée']
   return Object.entries(c).map(([k, v]) => {
     if (k === 'deleted_at') return v.new ? 'Tâche mise à la corbeille' : 'Tâche restaurée'
+    if (k === 'recurrence') return v.new ? 'Répétition modifiée' : 'Répétition retirée'
+    if (k === 'next_task_id') return 'Occurrence suivante créée'
     if (k === 'address') return v.new ? `Adresse : ${formatValue('title', v.new)}` : 'Adresse retirée'
     if (k === 'description' || k === 'notes_md') return `${FIELD_LABEL[k]} modifiée`
     return `${FIELD_LABEL[k] ?? k} : ${formatValue(k, v.old)} → ${formatValue(k, v.new)}`

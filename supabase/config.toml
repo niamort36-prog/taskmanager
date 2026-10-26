@@ -434,3 +434,6 @@ verify_jwt = true
 
 [functions.ai]
 verify_jwt = true
+
+[functions.weekly-plan]
+verify_jwt = false

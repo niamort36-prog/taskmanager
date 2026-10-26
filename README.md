@@ -238,6 +238,12 @@ Bouton **imprimante** en haut de « Toutes les tâches ».
 - **Archives** : les tâches terminées depuis plus de 30 jours ne sont plus chargées dans la liste (Réglages → Archives).
 - **Corbeille** : restaurer ou supprimer définitivement, fichiers compris. Purge automatique chaque nuit après 30 jours, sauf pour les tâches qui ont des fichiers joints (Réglages → Corbeille).
 
+## 9 bis. Version 1.2 : tâches récurrentes, plan de la semaine, sauvegarde
+
+- **Tâches récurrentes** : dans une tâche, section **Répéter** (chaque jour, semaine, mois ou année, tous les N, jours de la semaine, date de fin). Quand la tâche est terminée, la base crée aussitôt la suivante (trigger `spawn_next_recurrence`) : échéance décalée, sous-tâches remises à zéro, étiquettes, contacts et rappels recopiés. Rien n'est créé après la date de fin.
+- **Plan de la semaine par email** : Réglages → Notifications → **Plan de la semaine par email** (canal email requis). Chaque lundi à l'heure choisie (07:00 par défaut), l'IA analyse les tâches en cours et envoie priorités, plan d'action et conseils. Le bouton **Recevoir maintenant** l'envoie tout de suite. L'envoi passe par la fonction `weekly-plan`, appelée par pg_cron (`*/15 * * * 1`, un seul envoi par lundi) ; chaque plan compte pour un appel IA du jour.
+- **Sauvegarde** : Réglages → Données → **Fichier complet** (JSON de toutes les tables : tâches, sous-tâches, contacts, rappels, temps passé, modèles…) ou **Tableau Excel** (CSV, une ligne par tâche, dates au format français). Sur téléphone, le fichier passe par le menu Partager (Drive, email…). Les fichiers joints restent stockés en ligne.
+
 ## 10. Tester sur votre téléphone
 
 - **Version déployée** : ouvrez <https://niamort36-prog.github.io/taskmanager/> dans Chrome (Android) ou Safari (iPhone).

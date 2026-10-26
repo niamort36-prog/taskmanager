@@ -12,12 +12,15 @@ export function useTaskActions() {
   return {
     apply,
 
-    toggleDone(task: Pick<TaskListItem, 'id' | 'status'>) {
+    toggleDone(task: Pick<TaskListItem, 'id' | 'status' | 'recurrence'>) {
       const previous = task.status
       const next = previous === 'done' ? 'todo' : 'done'
       apply([task.id], { status: next })
       if (next === 'done') {
-        toast('Tâche terminée', { label: 'Annuler', onClick: () => apply([task.id], { status: previous }) })
+        toast(task.recurrence ? 'Tâche terminée · la suivante est créée' : 'Tâche terminée', {
+          label: 'Annuler',
+          onClick: () => apply([task.id], { status: previous }),
+        })
       }
     },
 

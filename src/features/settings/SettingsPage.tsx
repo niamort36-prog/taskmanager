@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { useSettings, useUpdateSettings } from './api'
+import { BackupCard } from './BackupCard'
 import { NotificationSettings } from './NotificationSettings'
 
 export function SettingsPage() {
@@ -59,6 +60,7 @@ export function SettingsPage() {
             <span className="flex-1">Corbeille</span>
             <ChevronRight className="size-5 text-muted" />
           </Link>
+          <BackupCard />
         </section>
 
         <section className="space-y-2">

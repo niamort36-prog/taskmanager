@@ -18,6 +18,9 @@ export interface Task {
   deleted_at: string | null
   /** Adresse (chantier, client…) pour l'itinéraire ; chaîne vide si aucune. */
   address: string
+  /** Répétition : une fois terminée, la tâche suivante est créée par la base. */
+  recurrence: Recurrence | null
+  next_task_id: string | null
   created_at: string
   updated_at: string
 }
@@ -76,13 +79,16 @@ export interface Settings {
   dnd_end: string | null
   digest_enabled: boolean
   digest_time: string
+  weekly_plan_enabled: boolean
+  weekly_plan_time: string
+  last_weekly_plan_on: string | null
   ai_daily_limit: number
 }
 
 export type TaskPatch = Partial<
   Pick<
     Task,
-    'title' | 'description' | 'notes_md' | 'status' | 'priority' | 'due_at' | 'due_has_time' | 'deleted_at' | 'position' | 'address'
+    'title' | 'description' | 'notes_md' | 'status' | 'priority' | 'due_at' | 'due_has_time' | 'deleted_at' | 'position' | 'address' | 'recurrence'
   >
 >
 
@@ -158,7 +164,7 @@ export interface NotificationLog {
   id: number
   reminder_id: string | null
   task_id: string | null
-  kind: 'reminder' | 'digest' | 'test'
+  kind: 'reminder' | 'digest' | 'test' | 'weekly_plan'
   occurrence_at: string
   channel: NotifyChannel
   status: 'sending' | 'sent' | 'failed' | 'skipped'

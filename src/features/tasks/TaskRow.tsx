@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react'
 import { useDrag } from '@use-gesture/react'
-import { Check, CalendarClock, ListChecks, MapPin } from 'lucide-react'
+import { Check, CalendarClock, ListChecks, MapPin, Repeat } from 'lucide-react'
 import { shortAddress } from '@/lib/maps'
 import type { Tag, TaskListItem } from '@/types/domain'
 import { DueBadge } from './DueBadge'
 import { PRIORITY_DOT, STATUS_CLASS, STATUS_LABEL } from './meta'
+import { recurrenceSummary } from './RecurrencePicker'
 import { useTaskUi } from './TaskUiContext'
 import { useTaskActions } from './useTaskActions'
 
@@ -139,6 +140,13 @@ export function TaskRow({ task, tags }: { task: TaskListItem; tags: Map<string, 
               <span className="inline-flex items-center gap-1">
                 <ListChecks className="size-4" aria-hidden />
                 {task.subtask_done}/{task.subtask_total}
+              </span>
+            )}
+            {task.recurrence && (
+              <span className="inline-flex items-center gap-1" title={recurrenceSummary(task.recurrence)}>
+                <Repeat className="size-4" aria-hidden />
+                <span className="sr-only">Répétée : </span>
+                {recurrenceSummary(task.recurrence).split(' (')[0].split(',')[0]}
               </span>
             )}
             {task.address && (

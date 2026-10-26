@@ -19,7 +19,7 @@ const tags: Row[] = [
 function task(title: string, extra: Row = {}): Row {
   return {
     id: uuid(), user_id: USER_ID, title, description: '', notes_md: '', status: 'todo', priority: 2,
-    due_at: null, due_has_time: false, position: 0, completed_at: null, deleted_at: null, address: '',
+    due_at: null, due_has_time: false, position: 0, completed_at: null, deleted_at: null, address: '', recurrence: null, next_task_id: null,
     created_at: iso(-48), updated_at: iso(-48), ...extra,
   }
 }
@@ -81,7 +81,7 @@ const DEFAULTS: Record<string, () => Row> = {
   task_templates: () => ({ id: uuid(), user_id: USER_ID, subtasks: [], created_at: new Date().toISOString() }),
   notification_logs: () => ({}),
   attachments: () => ({ id: uuid(), user_id: USER_ID, label: '', storage_path: null, location: null, mime: null, size: null, created_at: new Date().toISOString() }),
-  settings: () => ({ user_id: USER_ID, theme: 'dark', timezone: 'Europe/Paris', push_enabled: true, email_enabled: false, sms_enabled: false, notify_email: null, dnd_start: null, dnd_end: null, digest_enabled: false, digest_time: '07:30', ai_daily_limit: 50 }),
+  settings: () => ({ user_id: USER_ID, theme: 'dark', timezone: 'Europe/Paris', push_enabled: true, email_enabled: false, sms_enabled: false, notify_email: null, dnd_start: null, dnd_end: null, digest_enabled: false, digest_time: '07:30', weekly_plan_enabled: false, weekly_plan_time: '07:00', last_weekly_plan_on: null, ai_daily_limit: 50 }),
 }
 
 function parseValue(v: string): unknown {
@@ -125,6 +125,16 @@ function embed(table: string, row: Row, select: string): Row {
 function onWrite(table: string, row: Row, before?: Row) {
   row.updated_at = new Date().toISOString()
   if (table === 'tasks' && row.status !== before?.status) row.completed_at = row.status === 'done' ? new Date().toISOString() : null
+  // Version simplifiée du trigger spawn_next_recurrence (occurrence suivante).
+  if (table === 'tasks' && row.status === 'done' && before && before.status !== 'done' && row.recurrence && !row.next_task_id) {
+    const steps: Record<string, number> = { daily: 1, weekly: 7, monthly: 30, yearly: 365 }
+    const rec = row.recurrence as { freq: string; interval?: number }
+    const days = (steps[rec.freq] ?? 7) * (rec.interval ?? 1)
+    const next: Row = { ...row, id: uuid(), status: 'todo', completed_at: null, next_task_id: null, created_at: new Date().toISOString() }
+    if (row.due_at) next.due_at = new Date(new Date(String(row.due_at)).getTime() + days * 864e5).toISOString()
+    db.tasks.push(next)
+    row.next_task_id = next.id
+  }
   // Version simplifiée du trigger SQL reminders_compute_next.
   if (table === 'reminders') {
     const task = db.tasks.find((t) => t.id === row.task_id)

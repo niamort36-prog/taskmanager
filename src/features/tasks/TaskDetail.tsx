@@ -18,6 +18,7 @@ import type { TaskDetail as TaskDetailData } from '@/types/domain'
 import { useTask, useUpdateTask } from './api'
 import { PRIORITIES, PRIORITY_DOT, PRIORITY_LABEL, STATUS_LABEL, STATUS_ORDER } from './meta'
 import { NotesField } from './NotesField'
+import { RecurrencePicker } from './RecurrencePicker'
 import { useTaskActions } from './useTaskActions'
 
 /** Contenu du détail d'une tâche (utilisé en bottom sheet sur mobile, en panneau sur PC). */
@@ -186,6 +187,10 @@ function TaskForm({ task }: { task: TaskDetailData }) {
 
       <Section title="Échéance">
         <DueField value={{ due_at: task.due_at, due_has_time: task.due_has_time }} onChange={(d) => save(d)} />
+      </Section>
+
+      <Section title="Répéter">
+        <RecurrencePicker value={task.recurrence ?? null} onChange={(recurrence) => save({ recurrence })} />
       </Section>
 
       <Section title="Adresse">

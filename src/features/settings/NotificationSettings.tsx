@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { BellRing, CheckCircle2, CircleSlash, Loader2, Share, XCircle } from 'lucide-react'
+import { BellRing, CheckCircle2, CircleSlash, Loader2, Share, Sparkles, XCircle } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
 import { CHANNEL_LABEL } from '@/features/reminders/describe'
 import { formatDateTime } from '@/lib/dates'
@@ -18,6 +18,7 @@ export function NotificationSettings({ settings }: { settings: Settings | undefi
       <PushDeviceCard />
       <ChannelsCard settings={settings} />
       <DigestCard settings={settings} />
+      <WeeklyPlanCard settings={settings} />
       <DndCard settings={settings} />
       <LogCard />
     </div>
@@ -255,6 +256,72 @@ function DigestCard({ settings }: { settings: Settings | undefined }) {
   )
 }
 
+/** Plan d'action IA de la semaine, envoyé par email le lundi matin. */
+function WeeklyPlanCard({ settings }: { settings: Settings | undefined }) {
+  const update = useUpdateSettings()
+  const toast = useToast()
+  const [time, setTime] = useState('')
+  const [sending, setSending] = useState(false)
+  useEffect(() => setTime(settings?.weekly_plan_time?.slice(0, 5) ?? '07:00'), [settings?.weekly_plan_time])
+  if (!settings) return null
+  const possible = settings.email_enabled && Boolean(settings.notify_email)
+
+  const sendNow = async () => {
+    setSending(true)
+    try {
+      const { data, error } = await supabase.functions.invoke<{ ok: boolean; error?: string }>('weekly-plan', { body: {} })
+      if (error) throw new Error(error.message)
+      if (!data?.ok) throw new Error(data?.error ?? 'Échec de l’envoi')
+      toast(`Plan envoyé à ${settings.notify_email}`)
+    } catch (e) {
+      toast(e instanceof Error ? e.message : String(e))
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className={`${card} space-y-2`}>
+      <Toggle
+        label="Plan de la semaine par email"
+        on={settings.weekly_plan_enabled && possible}
+        disabled={!possible}
+        hint={
+          possible
+            ? 'Chaque lundi matin, l’IA analyse vos tâches et vous envoie priorités, plan d’action et conseils.'
+            : 'Activez d’abord le canal email.'
+        }
+        onChange={(v) => update.mutate({ weekly_plan_enabled: v })}
+      />
+      {possible && (
+        <div className="flex flex-wrap items-center gap-2">
+          {settings.weekly_plan_enabled && (
+            <label className="flex items-center gap-2">
+              <span>Le lundi à</span>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                onBlur={() => time && time !== settings.weekly_plan_time?.slice(0, 5) && update.mutate({ weekly_plan_time: time })}
+                className="min-h-11 rounded-lg border border-line bg-surface-2 px-3"
+              />
+            </label>
+          )}
+          <span className="flex-1" />
+          <button
+            disabled={sending}
+            onClick={() => void sendNow()}
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-accent px-3 text-accent disabled:opacity-50"
+          >
+            {sending ? <Loader2 className="size-5 animate-spin" /> : <Sparkles className="size-5" />}
+            Recevoir maintenant
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function DndCard({ settings }: { settings: Settings | undefined }) {
   const update = useUpdateSettings()
   const [start, setStart] = useState('')
@@ -322,6 +389,12 @@ const STATUS_ICON = {
   sending: <Loader2 className="size-5 shrink-0 animate-spin text-muted" aria-label="En cours" />,
 }
 
+const LOG_LABEL: Partial<Record<NotificationLog['kind'], string>> = {
+  test: 'Test',
+  digest: 'Récapitulatif du jour',
+  weekly_plan: 'Plan de la semaine',
+}
+
 /** Derniers envois (journal tenu côté serveur). */
 function LogCard() {
   const { data, isLoading } = useQuery({
@@ -346,7 +419,7 @@ function LogCard() {
             {STATUS_ICON[l.status]}
             <div className="min-w-0">
               <div className="break-words">
-                {l.kind === 'test' ? 'Test' : (l.task?.title ?? 'Tâche supprimée')} · {CHANNEL_LABEL[l.channel]}
+                {LOG_LABEL[l.kind] ?? l.task?.title ?? 'Tâche supprimée'} · {CHANNEL_LABEL[l.channel]}
               </div>
               <div className="text-sm text-muted">
                 {formatDateTime(l.sent_at ?? l.created_at)}

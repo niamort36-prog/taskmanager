@@ -126,6 +126,8 @@ export function useCreateTask() {
         completed_at: null,
         deleted_at: null,
         address: '',
+        recurrence: null,
+        next_task_id: null,
         created_at: now,
         updated_at: now,
         ...input,
