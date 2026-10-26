@@ -194,7 +194,7 @@ Fonctionnement et sécurité :
 
 Configuration :
 1. Créez une clé sur <https://aistudio.google.com/apikey>.
-2. Ajoutez dans `supabase/.env.secrets` : `GEMINI_API_KEY=…`. Facultatif : `GEMINI_MODEL=gemini-2.5-flash`.
+2. Ajoutez dans `supabase/.env.secrets` : `GEMINI_API_KEY=…`. Facultatif : `GEMINI_MODEL` (ici `gemini-3.8-flash`) et `GEMINI_FALLBACK_MODEL` (secours si le modèle principal est surchargé, `gemini-2.5-flash` par défaut).
 3. Lancez `npm run secrets:push`.
 
 > Avec l'offre gratuite de Gemini, Google peut utiliser les contenus envoyés pour améliorer ses modèles.
