@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Columns3, List, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Columns3, List, Printer, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Link } from 'react-router'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { useTasks } from './api'
@@ -49,13 +50,18 @@ export function TasksPage() {
       <PageHeader
         title="Toutes les tâches"
         actions={
-          <button
-            className="tap rounded-lg"
-            onClick={() => setViewState({ view: view === 'list' ? 'kanban' : 'list' })}
-            aria-label={view === 'list' ? 'Vue kanban' : 'Vue liste'}
-          >
-            {view === 'list' ? <Columns3 className="size-6" /> : <List className="size-6" />}
-          </button>
+          <>
+            <Link to="/export" className="tap rounded-lg" aria-label="Exporter, imprimer ou partager">
+              <Printer className="size-6" />
+            </Link>
+            <button
+              className="tap rounded-lg"
+              onClick={() => setViewState({ view: view === 'list' ? 'kanban' : 'list' })}
+              aria-label={view === 'list' ? 'Vue kanban' : 'Vue liste'}
+            >
+              {view === 'list' ? <Columns3 className="size-6" /> : <List className="size-6" />}
+            </button>
+          </>
         }
       >
         <div className="flex gap-2">

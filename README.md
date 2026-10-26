@@ -220,6 +220,14 @@ Le dernier plan reste consultable hors ligne. Les tâches sont envoyées au mod�
 - **Dictée vocale** : bouton micro dans la saisie rapide, la description, les notes, les sous-tâches et le plan IA. Il est masqué si le navigateur ne le gère pas ; le micro du clavier reste disponible. Selon le navigateur, la voix peut être transcrite par les serveurs de Google (Chrome) ou d'Apple (Safari).
 - **Poids** : environ 220 Ko compressés au premier chargement. Les pages secondaires, le détail d'une tâche et le rendu Markdown se chargent à la demande. Ensuite, l'app est servie depuis le cache.
 
+### Export, impression et partage
+Bouton **imprimante** en haut de « Toutes les tâches ».
+- **Contenu** : tâches en cours, retards + aujourd'hui, 7 prochains jours, filtres actuels de la liste, ou tout (y compris terminées).
+- **Regroupement** : par échéance, statut, priorité ou étiquette.
+- **Détails au choix** : sous-tâches, descriptions, notes, contacts avec leur téléphone.
+- **Imprimer / PDF** : la feuille sort en noir sur blanc quel que soit le thème. Sur téléphone, choisir « Enregistrer en PDF » dans la fenêtre d'impression.
+- **Partager** : envoie la liste en texte (SMS, WhatsApp, email…). **Copier** la met dans le presse-papiers.
+
 ## 9. Tester sur votre téléphone
 
 - **Version déployée** : ouvrez <https://niamort36-prog.github.io/taskmanager/> dans Chrome (Android) ou Safari (iPhone).

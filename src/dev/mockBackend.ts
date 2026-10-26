@@ -59,6 +59,7 @@ db.subtasks.push(
   { id: uuid(), task_id: t0, user_id: USER_ID, title: 'Demander 3 devis', done: false, due_at: iso(28), position: 1, created_at: iso(-1), updated_at: iso(-1) },
   { id: uuid(), task_id: t0, user_id: USER_ID, title: 'Valider avec le client', done: false, due_at: null, position: 2, created_at: iso(-1), updated_at: iso(-1) },
 )
+db.task_contacts.push({ task_id: t0, contact_id: db.contacts[0].id, user_id: USER_ID, role_on_task: 'Fournisseur', created_at: iso(-1) })
 db.task_tags.push({ task_id: t0, tag_id: tags[0].id, user_id: USER_ID }, { task_id: db.tasks[2].id, tag_id: tags[1].id, user_id: USER_ID })
 
 const DEFAULTS: Record<string, () => Row> = {
@@ -107,6 +108,10 @@ function embed(table: string, row: Row, select: string): Row {
   const out = { ...row }
   if (select.includes('subtasks')) out.subtasks = db.subtasks.filter((s) => s.task_id === row.id)
   if (select.includes('task_tags')) out.task_tags = db.task_tags.filter((t) => t.task_id === row.id)
+  if (select.includes('task_contacts'))
+    out.task_contacts = db.task_contacts
+      .filter((tc) => tc.task_id === row.id)
+      .map((tc) => ({ ...tc, contact: db.contacts.find((c) => c.id === tc.contact_id) ?? null }))
   return out
 }
 

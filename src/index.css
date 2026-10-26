@@ -99,6 +99,47 @@
   .md hr { border-color: var(--line); }
 }
 
+/* Impression / PDF : seule la feuille d'export est imprimée, en noir sur blanc. */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  /* Thème clair forcé : sinon les marges de la page sont noires en thème sombre. */
+  :root,
+  .dark {
+    color-scheme: light !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #print-area,
+  #print-area * {
+    visibility: visible;
+  }
+  #print-area {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+    font-size: 11pt;
+  }
+  .print-item {
+    break-inside: avoid;
+  }
+  #print-area h2 {
+    break-after: avoid;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
 /* Zone tactile minimale 44 px pour tous les boutons "icône". */
 @utility tap {
   min-width: 44px;

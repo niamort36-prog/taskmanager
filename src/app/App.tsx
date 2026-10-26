@@ -23,6 +23,7 @@ const CalendarPage = named(() => import('@/features/calendar/CalendarPage'), 'Ca
 const ContactsPage = named(() => import('@/features/contacts/ContactsPage'), 'ContactsPage')
 const SettingsPage = named(() => import('@/features/settings/SettingsPage'), 'SettingsPage')
 const PlanPage = named(() => import('@/features/ai/PlanPage'), 'PlanPage')
+const ExportPage = named(() => import('@/features/export/ExportPage'), 'ExportPage')
 
 // HashRouter : les URL sont du type /taskmanager/#/tasks, ce qui fonctionne
 // sur GitHub Pages sans configuration serveur.
@@ -77,6 +78,7 @@ function AuthGate() {
         <Route path="settings" element={<Page><SettingsPage /></Page>} />
         <Route path="contacts" element={<Page><ContactsPage /></Page>} />
         <Route path="plan" element={<Page><PlanPage /></Page>} />
+        <Route path="export" element={<Page><ExportPage /></Page>} />
         <Route path="*" element={<Navigate to="/today" replace />} />
       </Route>
     </Routes>

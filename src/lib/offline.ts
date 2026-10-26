@@ -136,14 +136,23 @@ export function registerMutationDefaults(qc: QueryClient) {
   })
 }
 
+/**
+ * Une opération IndexedDB qui ne répond pas (navigation privée, stockage plein
+ * ou bloqué…) ne doit jamais empêcher l'app de démarrer : au-delà du délai, ou
+ * en cas d'erreur, on continue sans cache.
+ */
+function settle<T>(p: Promise<T>, fallback: T, ms: number): Promise<T> {
+  return Promise.race([p.catch(() => fallback), new Promise<T>((r) => setTimeout(() => r(fallback), ms))])
+}
+
 /** Stockage du cache dans IndexedDB (plus de place que localStorage). */
 export const persister = createAsyncStoragePersister({
   key: 'taskmanager-cache',
   throttleTime: 1000,
   storage: {
-    getItem: async (k) => (await get<string>(k)) ?? null,
-    setItem: (k, v) => set(k, v),
-    removeItem: (k) => del(k),
+    getItem: async (k) => (await settle(get<string>(k), undefined, 2000)) ?? null,
+    setItem: (k, v) => settle(set(k, v), undefined, 5000),
+    removeItem: (k) => settle(del(k), undefined, 5000),
   },
 })
 
