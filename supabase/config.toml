@@ -431,3 +431,6 @@ verify_jwt = false
 
 [functions.notify-test]
 verify_jwt = true
+
+[functions.ai]
+verify_jwt = true

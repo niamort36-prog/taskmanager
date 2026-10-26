@@ -170,6 +170,37 @@ async function handle(url: URL, init: RequestInit): Promise<Response> {
   return json(result)
 }
 
+/** Réponses d'exemple de l'assistant IA (aucun appel réel en démo). */
+async function mockAi(body: { action: string }) {
+  await new Promise((r) => setTimeout(r, 600))
+  if (body.action === 'draft_email' || body.action === 'reply_email')
+    return json({
+      data: {
+        subject: 'Relance : devis plaques de plâtre',
+        body: [
+          'Bonjour Monsieur Dupuis,',
+          '',
+          'Je me permets de revenir vers vous concernant le devis pour les plaques de plâtre. Pourriez-vous me l’adresser d’ici [date] ?',
+          '',
+          'Je vous remercie par avance.',
+          '',
+          'Bien cordialement,',
+        ].join(String.fromCharCode(10)),
+      },
+      quota: { used: 3, daily_limit: 50 },
+    })
+  return json({
+    data: {
+      steps: [
+        { title: 'Appeler le fournisseur pour confirmer le stock', due_in_days: 0 },
+        { title: 'Valider le devis avec le client', due_in_days: 2 },
+        { title: 'Planifier la livraison sur le chantier', due_in_days: null },
+      ],
+    },
+    quota: { used: 3, daily_limit: 50 },
+  })
+}
+
 export function installMockBackend() {
   // Session factice, lue par supabase-js au démarrage (clé sb-<ref>-auth-token).
   const ref = new URL(import.meta.env.VITE_SUPABASE_URL ?? 'https://x.supabase.co').hostname.split('.')[0]
@@ -189,6 +220,8 @@ export function installMockBackend() {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
     if (url.pathname.includes('/rest/v1/')) return handle(url, init)
     if (url.pathname.includes('/auth/v1/')) return json({})
+    if (url.pathname.endsWith('/rest/v1/rpc/ai_quota')) return json([{ used: 2, daily_limit: 50, last_minute: 0 }])
+    if (url.pathname.endsWith('/functions/v1/ai')) return mockAi(JSON.parse(String(init.body ?? '{}')))
     if (url.pathname.includes('/functions/v1/')) return json({ ok: true, detail: 'démo' })
     // Storage simulé : les fichiers ne sont pas conservés.
     if (url.pathname.includes('/storage/v1/object/sign/')) return json({ signedURL: '/object/sign/demo?token=demo' })

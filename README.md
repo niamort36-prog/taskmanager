@@ -12,7 +12,7 @@ Webapp personnelle de gestion de tâches, **mobile first**, installable en PWA.
 | 2 | Contacts, liens, dossiers, pièces jointes, Markdown | ✅ |
 | 3 | Rappels + notifications push | ✅ |
 | 4 | Emails (Resend/Brevo), SMS (Free Mobile), récapitulatif quotidien | ✅ |
-| 5 | Assistant IA (Gemini) | ⏳ |
+| 5 | Assistant IA (Gemini) | ✅ |
 | 6 | PWA, hors ligne, finitions | ⏳ |
 
 ---
@@ -179,13 +179,33 @@ Les fournisseurs sont interchangeables (`supabase/functions/_shared/email.ts` et
 ### Dans l'app
 **Réglages → Canaux autorisés** : saisissez l'adresse email, activez Email et/ou SMS, puis **Tester**. Le **récapitulatif quotidien** (tâches du jour + retards) s'active juste en dessous, avec son heure d'envoi. Il n'est envoyé qu'une fois par jour, et pas du tout s'il n'y a rien.
 
-## 7. Tester sur votre téléphone
+## 7. Assistant IA (phase 5)
+
+Dans le détail d'une tâche, la section **Assistant IA** propose quatre actions :
+- **Rédiger un mail** : relance, demande d'info, point ou mail libre. On choisit le destinataire parmi les contacts liés et le ton (formel, neutre, direct). Le texte est modifiable, copiable, ou s'ouvre dans la messagerie (`mailto:`).
+- **Répondre à un mail** : collez le mail reçu, l'IA propose une réponse.
+- **Prochaines étapes** et **Découper la tâche** : suggestions ajoutables en sous-tâches, une par une ou toutes d'un coup.
+
+Fonctionnement et sécurité :
+- Tout passe par l'Edge Function `ai`. La clé Gemini reste dans les secrets Supabase, jamais dans le navigateur ni dans le dépôt.
+- Le contexte est construit côté serveur : titre, description, notes, sous-tâches, nom et rôle du contact. **Jamais de téléphone ni d'email.**
+- Quota : `settings.ai_daily_limit` (50 par jour par défaut) et 10 demandes par minute au maximum. Chaque appel est journalisé dans `ai_usage`.
+- Fournisseur interchangeable : `supabase/functions/_shared/ai/provider.ts`. Gemini est l'implémentation par défaut.
+
+Configuration :
+1. Créez une clé sur <https://aistudio.google.com/apikey>.
+2. Ajoutez dans `supabase/.env.secrets` : `GEMINI_API_KEY=…`. Facultatif : `GEMINI_MODEL=gemini-2.5-flash`.
+3. Lancez `npm run secrets:push`.
+
+> Avec l'offre gratuite de Gemini, Google peut utiliser les contenus envoyés pour améliorer ses modèles.
+
+## 8. Tester sur votre téléphone
 
 - **Version déployée** : ouvrez <https://niamort36-prog.github.io/taskmanager/> dans Chrome (Android) ou Safari (iPhone).
 - **Version locale** : `npm run dev -- --host`, puis ouvrez `http://<IP-du-PC>:5173/taskmanager/` depuis le téléphone (même Wi-Fi). Ajoutez cette URL aux *Redirect URLs* Supabase si vous voulez utiliser le lien de l'email ; le code à 6 chiffres fonctionne dans tous les cas.
 - **Dans le navigateur du PC** : outils de développement (F12) → icône téléphone → *iPhone 12 Pro* (390 px), *Galaxy S8* (360 px), *iPhone 14 Pro Max* (430 px).
 
-## 8. Gestes et raccourcis
+## 9. Gestes et raccourcis
 
 | Geste | Effet |
 |---|---|
@@ -198,7 +218,7 @@ Les fournisseurs sont interchangeables (`supabase/functions/_shared/email.ts` et
 | Boutons téléphone / bulle / enveloppe d'un contact | Appeler, SMS, email (tel:, sms:, mailto:) |
 | Toucher un chemin réseau | Le copie dans le presse-papiers (un navigateur ne peut pas l'ouvrir) |
 
-## 9. Secrets
+## 10. Secrets
 
 Tous les secrets vont dans **Supabase → Edge Functions → Secrets** (ou `npx supabase secrets set NOM=valeur`), jamais dans le dépôt :
 

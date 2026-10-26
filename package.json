@@ -11,7 +11,7 @@
     "typecheck": "tsc -b",
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --linked > src/types/database.ts",
-    "functions:deploy": "supabase functions deploy send-reminders --no-verify-jwt --use-api --project-ref yuevvnutdfsqnabbnbgh && supabase functions deploy daily-digest --no-verify-jwt --use-api --project-ref yuevvnutdfsqnabbnbgh && supabase functions deploy notify-test --use-api --project-ref yuevvnutdfsqnabbnbgh",
+    "functions:deploy": "supabase functions deploy send-reminders --no-verify-jwt --use-api --project-ref yuevvnutdfsqnabbnbgh && supabase functions deploy daily-digest --no-verify-jwt --use-api --project-ref yuevvnutdfsqnabbnbgh && supabase functions deploy notify-test --use-api --project-ref yuevvnutdfsqnabbnbgh && supabase functions deploy ai --use-api --project-ref yuevvnutdfsqnabbnbgh",
     "secrets:push": "supabase secrets set --env-file supabase/.env.secrets --project-ref yuevvnutdfsqnabbnbgh"
   },
   "dependencies": {

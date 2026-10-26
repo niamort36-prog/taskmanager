@@ -31,6 +31,18 @@ export function useSubtaskMutations(taskId: string) {
     onSettled: refresh,
   })
 
+  /** Ajout groupé (suggestions de l'assistant), positions consécutives. */
+  const addMany = useMutation({
+    mutationFn: async (items: { title: string; due_at?: string | null }[]) => {
+      const current = qc.getQueryData<TaskDetail | null>(qk.task(taskId))?.subtasks ?? []
+      const start = current.length ? Math.max(...current.map((s) => s.position)) + 1 : 0
+      const rows = items.map((it, i) => ({ task_id: taskId, title: it.title, due_at: it.due_at ?? null, position: start + i }))
+      return unwrap<Subtask[]>(await supabase.from('subtasks').insert(rows).select())
+    },
+    onSuccess: (added) => setSubtasks((list) => [...list, ...added]),
+    onSettled: refresh,
+  })
+
   const update = useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: SubtaskPatch }) => {
       unwrap(await supabase.from('subtasks').update(patch).eq('id', id))
@@ -64,5 +76,5 @@ export function useSubtaskMutations(taskId: string) {
     onSettled: refresh,
   })
 
-  return { add, update, remove, reorder }
+  return { add, addMany, update, remove, reorder }
 }

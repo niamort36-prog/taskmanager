@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown, History, Trash2, X } from 'lucide-react'
 import { DueField } from '@/components/ui/DueField'
+import { AiAssistant } from '@/features/ai/AiAssistant'
 import { AttachmentsSection } from '@/features/attachments/AttachmentsSection'
 import { TaskContactsSection } from '@/features/contacts/TaskContactsSection'
 import { HistoryList } from '@/features/history/HistoryList'
@@ -187,6 +188,10 @@ function TaskForm({ task }: { task: TaskDetailData }) {
 
       <Section title="Sous-tâches">
         <SubtaskList taskId={task.id} subtasks={task.subtasks} />
+      </Section>
+
+      <Section title="Assistant IA">
+        <AiAssistant taskId={task.id} />
       </Section>
 
       <Section title="Contacts">
