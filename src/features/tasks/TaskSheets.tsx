@@ -5,11 +5,12 @@
 import { useState } from 'react'
 import { CalendarClock, Check, Plus, Trash2, X } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
+import { appendText, DictationButton } from '@/components/ui/DictationButton'
 import { DateChips } from '@/components/ui/DueField'
 import { useToast } from '@/components/ui/Toast'
 import { formatDue, fromInputValue, postponeOptions, type Due } from '@/lib/dates'
 import { useCreateTask, useTasks } from './api'
-import { TaskDetail } from './TaskDetail'
+import { LazyTaskDetail as TaskDetail } from './LazyTaskDetail'
 import { useTaskUi } from './TaskUiContext'
 import { useTaskActions } from './useTaskActions'
 
@@ -27,12 +28,13 @@ export function QuickAddSheet() {
     setDue({ due_at: null, due_has_time: false })
   }
 
-  const submit = async () => {
+  const submit = () => {
     const t = title.trim()
     if (!t) return
-    const task = await create.mutateAsync({ title: t, ...due })
+    // Ajout immédiat (même hors ligne) ; l'envoi au serveur suit.
+    const id = create.create({ title: t, ...due })
     close()
-    toast('Tâche ajoutée', { label: 'Ouvrir', onClick: () => ui.openTask(task.id) })
+    toast('Tâche ajoutée', { label: 'Ouvrir', onClick: () => ui.openTask(id) })
   }
 
   return (
@@ -41,9 +43,10 @@ export function QuickAddSheet() {
         className="space-y-4 p-4"
         onSubmit={(e) => {
           e.preventDefault()
-          void submit()
+          submit()
         }}
       >
+        <div className="flex items-center gap-1">
         <input
           autoFocus
           value={title}
@@ -51,9 +54,11 @@ export function QuickAddSheet() {
           placeholder="Que faut-il faire ?"
           enterKeyHint="send"
           maxLength={500}
-          className="min-h-12 w-full rounded-xl border border-line bg-surface-2 px-4 text-lg"
+          className="min-h-12 w-full min-w-0 flex-1 rounded-xl border border-line bg-surface-2 px-4 text-lg"
           aria-label="Titre de la tâche"
         />
+        <DictationButton onText={(t) => setTitle((cur) => appendText(cur, t))} />
+        </div>
         <DateChips onPick={setDue} current={due} />
         <div className="flex min-h-11 items-center gap-3">
           <span className="flex-1 text-muted">
@@ -68,7 +73,7 @@ export function QuickAddSheet() {
         {create.error && <p className="text-danger">{create.error.message}</p>}
         <button
           type="submit"
-          disabled={!title.trim() || create.isPending}
+          disabled={!title.trim()}
           className="min-h-12 w-full rounded-xl bg-accent font-semibold text-accent-fg disabled:opacity-50"
         >
           Ajouter

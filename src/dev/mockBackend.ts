@@ -143,8 +143,8 @@ async function handle(url: URL, init: RequestInit): Promise<Response> {
   } else if (method === 'POST') {
     const ignore = headers.get('Prefer')?.includes('ignore-duplicates')
     for (const input of Array.isArray(body) ? body : [body]) {
-      const key = url.searchParams.get('on_conflict')
-      if (key && rows.some((r) => r[key] === input[key])) {
+      const keys = url.searchParams.get('on_conflict')?.split(',')
+      if (keys && rows.some((r) => keys.every((k) => r[k] === input[k]))) {
         if (ignore) continue
       }
       const row = { ...DEFAULTS[table](), ...input }
@@ -173,6 +173,30 @@ async function handle(url: URL, init: RequestInit): Promise<Response> {
 /** Réponses d'exemple de l'assistant IA (aucun appel réel en démo). */
 async function mockAi(body: { action: string }) {
   await new Promise((r) => setTimeout(r, 600))
+  if (body.action === 'plan') {
+    const open = db.tasks.filter((t) => t.status !== 'done')
+    return json({
+      data: {
+        summary: 'Deux urgences ce matin (une relance en retard et une commande pour demain), puis un dossier à débloquer. Le reste peut attendre la fin de semaine.',
+        priorities: open.slice(0, 4).map((t, i) => ({
+          task_id: t.id,
+          title: t.title,
+          category: ['urgent', 'urgent', 'bloquee', 'plus_tard'][i],
+          why: 'Échéance proche et impact direct sur le chantier.',
+          how: 'Commencez par un appel de 5 minutes, puis notez la réponse dans la tâche.',
+        })),
+        plan: [
+          { slot: 'Maintenant', actions: ['Appelez le plombier pour le devis', 'Envoyez la facture'] },
+          { slot: 'Cet après-midi', actions: ['Commandez les plaques de plâtre', 'Relancez l’architecte'] },
+        ],
+        advice: ['Regroupez vos appels en un seul créneau.', 'Gardez 15 minutes en fin de journée pour préparer demain.'],
+        horizon: 'today',
+        generated_at: new Date().toISOString(),
+        task_count: open.length,
+      },
+      quota: { used: 3, daily_limit: 50 },
+    })
+  }
   if (body.action === 'draft_email' || body.action === 'reply_email')
     return json({
       data: {

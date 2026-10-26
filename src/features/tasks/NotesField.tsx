@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Eye, Pencil } from 'lucide-react'
+import { DictationButton } from '@/components/ui/DictationButton'
 
 const MarkdownView = lazy(() => import('./MarkdownView'))
 
@@ -24,7 +25,17 @@ export function NotesField({ value, onSave }: { value: string; onSave: (v: strin
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-1">
+        {editing && (
+          <DictationButton
+            onText={(t) => {
+              // Chaque dictée sur une nouvelle ligne.
+              const next = v.trim() ? [v.trimEnd(), t].join('\n') : t
+              setV(next)
+              onSave(next)
+            }}
+          />
+        )}
         <button
           type="button"
           onClick={() => {

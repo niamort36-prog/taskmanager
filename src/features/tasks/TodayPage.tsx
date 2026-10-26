@@ -1,4 +1,7 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router'
+import { Sparkles } from 'lucide-react'
+import { InstallBanner } from '@/components/ui/InstallBanner'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { dueBucket, formatDayTitle, nowParis } from '@/lib/dates'
 import { useTasks } from './api'
@@ -23,8 +26,19 @@ export function TodayPage() {
 
   return (
     <>
-      <PageHeader title={formatDayTitle(nowParis())} />
+      <PageHeader
+        title={formatDayTitle(nowParis())}
+        actions={
+          <Link
+            to="/plan"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-accent px-3 font-medium text-accent"
+          >
+            <Sparkles className="size-5" /> Plan IA
+          </Link>
+        }
+      />
       <div className="space-y-6 p-4">
+        <InstallBanner />
         {isLoading && <LoadingList />}
         {error && <ErrorBox error={error} />}
         <TaskSection title="En retard" tasks={groups.overdue} tone="danger" />

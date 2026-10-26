@@ -4,6 +4,7 @@
  * puis resynchronisé avec le serveur.
  */
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { mk, type TaskCreateVars, type TaskUpdateVars } from '@/lib/offline'
 import { supabase, unwrap } from '@/lib/supabase'
 import { qk } from '@/lib/queryClient'
 import type { Task, TaskDetail, TaskListItem, TaskPatch } from '@/types/domain'
@@ -73,10 +74,9 @@ export function patchTaskCache(qc: QueryClient, ids: string[], patch: TaskPatch)
 
 export function useUpdateTasks() {
   const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ ids, patch }: { ids: string[]; patch: TaskPatch }) => {
-      unwrap(await supabase.from('tasks').update(patch).in('id', ids))
-    },
+  // mutationFn et rafraîchissement : voir lib/offline.ts (rejouable hors ligne).
+  return useMutation<void, Error, TaskUpdateVars, { previous?: TaskListItem[] }>({
+    mutationKey: mk.taskUpdate,
     onMutate: async ({ ids, patch }) => {
       await qc.cancelQueries({ queryKey: qk.tasks })
       const previous = qc.getQueryData<TaskListItem[]>(qk.tasks)
@@ -85,14 +85,6 @@ export function useUpdateTasks() {
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.previous) qc.setQueryData(qk.tasks, ctx.previous)
-    },
-    onSettled: (_data, _err, { ids }) => {
-      qc.invalidateQueries({ queryKey: qk.tasks })
-      ids.forEach((id) => {
-        qc.invalidateQueries({ queryKey: qk.task(id) })
-        qc.invalidateQueries({ queryKey: qk.history(id) })
-        qc.invalidateQueries({ queryKey: qk.reminders(id) }) // next_fire_at recalculé côté serveur
-      })
     },
   })
 }
@@ -106,25 +98,47 @@ export function useUpdateTask() {
   }
 }
 
-export interface NewTask {
-  title: string
-  due_at?: string | null
-  due_has_time?: boolean
-  status?: Task['status']
-  priority?: Task['priority']
-}
+export type NewTask = Omit<TaskCreateVars, 'id'>
 
+/**
+ * Création optimiste : l'identifiant est généré ici, la tâche apparaît tout de
+ * suite (y compris hors ligne) et l'envoi est rejoué si besoin.
+ * Renvoie l'id de la nouvelle tâche.
+ */
 export function useCreateTask() {
   const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (input: NewTask) =>
-      unwrap<Task>(await supabase.from('tasks').insert(input).select().single()),
-    onSuccess: (task) => {
+  const m = useMutation<void, Error, TaskCreateVars>({
+    mutationKey: mk.taskCreate,
+    onMutate: (input) => {
+      const now = new Date().toISOString()
+      const task: Task = {
+        user_id: '',
+        description: '',
+        notes_md: '',
+        status: 'todo',
+        priority: 2,
+        due_at: null,
+        due_has_time: false,
+        position: 0,
+        completed_at: null,
+        deleted_at: null,
+        created_at: now,
+        updated_at: now,
+        ...input,
+      }
       qc.setQueryData<TaskListItem[]>(qk.tasks, (list) => [
         { ...task, subtask_total: 0, subtask_done: 0, subtask_dues: [], tag_ids: [] },
         ...(list ?? []),
       ])
-      qc.invalidateQueries({ queryKey: qk.tasks })
+      qc.setQueryData<TaskDetail>(qk.task(task.id), { ...task, subtasks: [], tag_ids: [] })
     },
   })
+  return {
+    ...m,
+    create: (input: NewTask): string => {
+      const id = crypto.randomUUID()
+      m.mutate({ ...input, id })
+      return id
+    },
+  }
 }

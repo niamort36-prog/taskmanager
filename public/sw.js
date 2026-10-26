@@ -1,8 +1,86 @@
-/* Service worker : réception des notifications push et ouverture de la
-   tâche au clic. (La mise en cache hors ligne arrivera en phase 6.) */
+/* Service worker :
+   - cache de l'application (ouverture sans réseau, chargement rapide en 4G) ;
+   - réception des notifications push et ouverture de la tâche au clic.
+   Les données (tâches…) sont mises en cache par l'app elle-même (IndexedDB). */
 
-self.addEventListener('install', () => self.skipWaiting())
-self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
+const SHELL = 'tm-shell-v2'
+const ASSETS = 'tm-assets-v2'
+const KEEP = [SHELL, ASSETS]
+const SHELL_FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icons/icon-192.png', './icons/badge-96.png']
+const NETWORK_TIMEOUT_MS = 3000
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches
+      .open(SHELL)
+      .then((c) => c.addAll(SHELL_FILES))
+      .then(() => self.skipWaiting()),
+  )
+})
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => !KEEP.includes(k)).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim()),
+  )
+})
+
+/** Réseau d'abord (version à jour), cache si pas de réponse en 3 s ou hors ligne. */
+async function networkFirst(request) {
+  const cache = await caches.open(SHELL)
+  const network = fetch(request)
+    .then((res) => {
+      if (res.ok) cache.put('./index.html', res.clone())
+      return res
+    })
+    .catch(() => null)
+  const timeout = new Promise((resolve) => setTimeout(() => resolve(null), NETWORK_TIMEOUT_MS))
+  const fast = await Promise.race([network, timeout])
+  if (fast) return fast
+  const cached = await cache.match('./index.html')
+  return cached ?? (await network) ?? Response.error()
+}
+
+/** Fichiers à nom unique (/assets/…-hash.js) : le cache suffit, ils ne changent jamais. */
+async function cacheFirst(request) {
+  const cache = await caches.open(ASSETS)
+  const cached = await cache.match(request)
+  if (cached) return cached
+  const res = await fetch(request)
+  if (res.ok) {
+    cache.put(request, res.clone())
+    trim(cache, 80)
+  }
+  return res
+}
+
+/** Garde les N entrées les plus récentes (anciennes versions de l'app). */
+async function trim(cache, max) {
+  const keys = await cache.keys()
+  for (const k of keys.slice(0, Math.max(0, keys.length - max))) await cache.delete(k)
+}
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+  if (request.method !== 'GET') return
+  const url = new URL(request.url)
+  // Supabase et autres domaines : jamais interceptés (les données passent par l'app).
+  if (url.origin !== self.location.origin || !url.href.startsWith(self.registration.scope)) return
+
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirst(request))
+  } else if (url.pathname.includes('/assets/')) {
+    event.respondWith(cacheFirst(request))
+  } else if (/\.(png|svg|webmanifest)$/.test(url.pathname)) {
+    event.respondWith(caches.match(request).then((c) => c ?? fetch(request)))
+  }
+})
+
+// ---------------------------------------------------------------------
+// Notifications push
+// ---------------------------------------------------------------------
 
 self.addEventListener('push', (event) => {
   let data = {}

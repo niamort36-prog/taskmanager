@@ -1,27 +1,46 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router'
-import { QueryClientProvider } from '@tanstack/react-query'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { ToastProvider } from '@/components/ui/Toast'
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider'
 import { LoginPage } from '@/features/auth/LoginPage'
-import { CalendarPage } from '@/features/calendar/CalendarPage'
-import { ContactsPage } from '@/features/contacts/ContactsPage'
 import { useSettings, useThemeSync } from '@/features/settings/api'
-import { SettingsPage } from '@/features/settings/SettingsPage'
 import { TasksPage } from '@/features/tasks/TasksPage'
 import { TaskUiProvider } from '@/features/tasks/TaskUiContext'
 import { TodayPage } from '@/features/tasks/TodayPage'
+import { CACHE_MAX_AGE, persister, registerMutationDefaults } from '@/lib/offline'
 import { queryClient } from '@/lib/queryClient'
 import { refreshSubscription } from '@/lib/push'
 import { isSupabaseConfigured } from '@/lib/supabase'
 import { AppLayout } from './AppLayout'
+
+registerMutationDefaults(queryClient)
+
+// Pages secondaires chargées à la demande : premier affichage plus rapide en 4G.
+const named = <K extends string>(load: () => Promise<Record<K, React.ComponentType>>, name: K) =>
+  lazy(() => load().then((m) => ({ default: m[name] })))
+const CalendarPage = named(() => import('@/features/calendar/CalendarPage'), 'CalendarPage')
+const ContactsPage = named(() => import('@/features/contacts/ContactsPage'), 'ContactsPage')
+const SettingsPage = named(() => import('@/features/settings/SettingsPage'), 'SettingsPage')
+const PlanPage = named(() => import('@/features/ai/PlanPage'), 'PlanPage')
 
 // HashRouter : les URL sont du type /taskmanager/#/tasks, ce qui fonctionne
 // sur GitHub Pages sans configuration serveur.
 export function App() {
   if (!isSupabaseConfigured) return <ConfigMissing />
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister,
+        maxAge: CACHE_MAX_AGE,
+        buster: __APP_VERSION__,
+        // On enregistre aussi les modifications en attente (hors ligne).
+        dehydrateOptions: { shouldDehydrateMutation: (m) => m.state.isPaused },
+      }}
+      // Au démarrage, on rejoue les modifications restées en attente.
+      onSuccess={() => void queryClient.resumePausedMutations()}
+    >
       <AuthProvider>
         <ToastProvider>
           <HashRouter>
@@ -29,7 +48,7 @@ export function App() {
           </HashRouter>
         </ToastProvider>
       </AuthProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   )
 }
 
@@ -54,14 +73,19 @@ function AuthGate() {
         <Route index element={<Navigate to="/today" replace />} />
         <Route path="today" element={<TodayPage />} />
         <Route path="tasks" element={<TasksPage />} />
-        <Route path="calendar" element={<CalendarPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="contacts" element={<ContactsPage />} />
+        <Route path="calendar" element={<Page><CalendarPage /></Page>} />
+        <Route path="settings" element={<Page><SettingsPage /></Page>} />
+        <Route path="contacts" element={<Page><ContactsPage /></Page>} />
+        <Route path="plan" element={<Page><PlanPage /></Page>} />
         <Route path="*" element={<Navigate to="/today" replace />} />
       </Route>
     </Routes>
   )
 }
+
+const Page = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<div className="p-4 text-muted">Chargement…</div>}>{children}</Suspense>
+)
 
 /**
  * Lien avec le service worker : clic sur une notification alors que l'app

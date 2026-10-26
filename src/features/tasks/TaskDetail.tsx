@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown, History, Trash2, X } from 'lucide-react'
+import { appendText, DictationButton } from '@/components/ui/DictationButton'
 import { DueField } from '@/components/ui/DueField'
 import { AiAssistant } from '@/features/ai/AiAssistant'
 import { AttachmentsSection } from '@/features/attachments/AttachmentsSection'
@@ -70,6 +71,7 @@ function AutoTextarea({
   className = '',
   singleLine,
   label,
+  dictation,
 }: {
   value: string
   onSave: (v: string) => void
@@ -77,6 +79,8 @@ function AutoTextarea({
   className?: string
   singleLine?: boolean
   label: string
+  /** Affiche un bouton micro qui ajoute le texte dicté et enregistre. */
+  dictation?: boolean
 }) {
   const [v, setV] = useState(value)
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -94,7 +98,7 @@ function AutoTextarea({
     ro.observe(el)
     return () => ro.disconnect()
   }, [v])
-  return (
+  const field = (
     <textarea
       ref={ref}
       aria-label={label}
@@ -112,6 +116,19 @@ function AutoTextarea({
       onBlur={() => v !== value && onSave(v)}
       className={`w-full resize-none overflow-hidden rounded-lg border border-transparent bg-transparent px-2 py-2 hover:border-line focus:border-accent focus:outline-none ${className}`}
     />
+  )
+  if (!dictation) return field
+  return (
+    <div className="flex items-start gap-1">
+      <div className="min-w-0 flex-1">{field}</div>
+      <DictationButton
+        onText={(t) => {
+          const next = appendText(v, t)
+          setV(next)
+          onSave(next)
+        }}
+      />
+    </div>
   )
 }
 
@@ -182,6 +199,7 @@ function TaskForm({ task }: { task: TaskDetailData }) {
           value={task.description}
           onSave={(description) => save({ description })}
           placeholder="Ajouter une description…"
+          dictation
           className="-mx-2 min-h-11"
         />
       </Section>

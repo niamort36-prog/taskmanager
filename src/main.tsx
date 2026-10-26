@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './lib/installPrompt'
 
 async function start() {
   // Mode démo (dev uniquement) : `VITE_MOCK=1 npm run dev`. Supprimé du build de prod.

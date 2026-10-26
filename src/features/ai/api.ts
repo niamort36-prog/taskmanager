@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase, unwrap } from '@/lib/supabase'
 
-export type AiAction = 'draft_email' | 'reply_email' | 'next_steps' | 'breakdown'
+export type AiAction = 'draft_email' | 'reply_email' | 'next_steps' | 'breakdown' | 'plan'
 export type Tone = 'formel' | 'neutre' | 'direct'
 export type EmailKind = 'relance' | 'demande_info' | 'reponse' | 'libre'
 
@@ -28,6 +28,8 @@ interface AiPayload {
   tone?: Tone
   instructions?: string
   received?: string
+  horizon?: 'today' | 'week'
+  context?: string
 }
 
 const quotaKey = ['ai-quota'] as const

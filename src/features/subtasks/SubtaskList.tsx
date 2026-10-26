@@ -17,6 +17,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CalendarDays, Check, GripVertical, Plus, Trash2 } from 'lucide-react'
+import { appendText, DictationButton } from '@/components/ui/DictationButton'
 import { fromInputValue, toInputValue } from '@/lib/dates'
 import { DueBadge } from '@/features/tasks/DueBadge'
 import type { Subtask } from '@/types/domain'
@@ -90,6 +91,7 @@ export function SubtaskList({ taskId, subtasks }: { taskId: string; subtasks: Su
           enterKeyHint="done"
           className="min-h-11 min-w-0 flex-1 rounded-lg border border-line bg-surface-2 px-3"
         />
+        <DictationButton onText={(t) => setDraft((cur) => appendText(cur, t))} />
         <button type="submit" className="tap rounded-lg bg-accent text-accent-fg" aria-label="Ajouter la sous-tâche">
           <Plus className="size-6" />
         </button>

@@ -134,3 +134,101 @@ export function breakdownPrompt(t: TaskContext): AiRequest {
     temperature: 0.4,
   }
 }
+
+// ---------------------------------------------------------------------
+// Rapport global : tri, priorités et plan d'action sur toutes les tâches.
+// ---------------------------------------------------------------------
+
+export type Horizon = 'today' | 'week'
+
+/** Tâche résumée pour le rapport ; "ref" (T1, T2…) remplace l'identifiant. */
+export interface PlanTask {
+  ref: string
+  title: string
+  status: string
+  priority: number
+  due_at: string | null
+  due_has_time: boolean
+  overdue: boolean
+  description: string
+  tags: string[]
+  subtasks_done: number
+  subtasks_total: number
+  next_subtasks: string[]
+  contacts: string[]
+}
+
+const PLAN_SCHEMA: JsonSchema = {
+  type: 'OBJECT',
+  properties: {
+    summary: { type: 'STRING', description: 'Synthèse de la situation en 2 à 4 phrases' },
+    priorities: {
+      type: 'ARRAY',
+      description: 'Tâches classées de la plus prioritaire à la moins prioritaire',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          ref: { type: 'STRING', description: 'Référence de la tâche (T1, T2…), telle que fournie' },
+          category: { type: 'STRING', description: 'urgent | important | rapide | bloquee | plus_tard' },
+          why: { type: 'STRING', description: 'Pourquoi à ce rang, une phrase' },
+          how: { type: 'STRING', description: 'Comment s’y prendre concrètement : première action, une ou deux phrases' },
+        },
+        required: ['ref', 'category', 'why', 'how'],
+      },
+    },
+    plan: {
+      type: 'ARRAY',
+      description: 'Plan d’action chronologique par créneaux',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          slot: { type: 'STRING', description: 'Créneau : « Maintenant », « Ce matin », « Mardi »…' },
+          actions: { type: 'ARRAY', items: { type: 'STRING' } },
+        },
+        required: ['slot', 'actions'],
+      },
+    },
+    advice: { type: 'ARRAY', description: '2 à 4 conseils d’organisation adaptés', items: { type: 'STRING' } },
+  },
+  required: ['summary', 'priorities', 'plan', 'advice'],
+}
+
+function planTaskLine(t: PlanTask): string {
+  const parts = [
+    `${t.ref} · ${t.title}`,
+    `statut ${STATUS[t.status] ?? t.status}`,
+    `priorité ${PRIORITY[t.priority] ?? t.priority}`,
+    t.due_at ? `${t.overdue ? 'EN RETARD, ' : ''}échéance ${formatDueFr(t.due_at, t.due_has_time)}` : 'sans échéance',
+  ]
+  if (t.subtasks_total) parts.push(`sous-tâches ${t.subtasks_done}/${t.subtasks_total}`)
+  if (t.next_subtasks.length) parts.push(`prochaines : ${t.next_subtasks.join(' ; ')}`)
+  if (t.tags.length) parts.push(`étiquettes : ${t.tags.join(', ')}`)
+  if (t.contacts.length) parts.push(`contacts : ${t.contacts.join(', ')}`)
+  if (t.description.trim()) parts.push(`détail : ${cut(t.description.trim().replace(/\s+/g, ' '), 200)}`)
+  return `- ${parts.join(' | ')}`
+}
+
+export function planPrompt(tasks: PlanTask[], horizon: Horizon, context: string, now = new Date()): AiRequest {
+  const today = now.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long' })
+  const hour = now.toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' })
+  return {
+    system: `${BASE_SYSTEM}
+Tu es aussi un coach d'organisation pragmatique. Méthode :
+- trie selon l'urgence (retards, échéances proches) ET l'importance (priorité, enjeu client/argent, tâches qui en débloquent d'autres) ;
+- repère les "rapides" (moins de 15 minutes) à enchaîner pour libérer l'esprit ;
+- pour une tâche bloquée, propose l'action qui la débloque (souvent : relancer quelqu'un) ;
+- regroupe ce qui va ensemble (même contact, même lieu, même type : appels, mails) ;
+- sois réaliste : une journée ne contient pas 15 tâches importantes.
+Catégories : urgent, important, rapide, bloquee, plus_tard. Utilise UNIQUEMENT les références fournies (T1, T2…).
+Écris court et concret, à la deuxième personne (« Appelez… », « Commencez par… »).`,
+    prompt: `Nous sommes ${today}, il est ${hour}.
+Horizon du plan : ${horizon === 'today' ? 'la journée d’aujourd’hui' : 'les 7 prochains jours'}.
+${context.trim() ? `Contraintes de l'utilisateur : ${cut(context.trim(), 500)}\n` : ''}
+Voici ses ${tasks.length} tâches en cours :
+${tasks.map(planTaskLine).join('\n')}
+
+Classe les tâches pertinentes pour cet horizon (au plus 15), puis propose un plan d'action par créneaux et quelques conseils.`,
+    schema: PLAN_SCHEMA,
+    temperature: 0.4,
+  }
+}

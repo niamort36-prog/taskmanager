@@ -13,7 +13,7 @@ Webapp personnelle de gestion de tâches, **mobile first**, installable en PWA.
 | 3 | Rappels + notifications push | ✅ |
 | 4 | Emails (Resend/Brevo), SMS (Free Mobile), récapitulatif quotidien | ✅ |
 | 5 | Assistant IA (Gemini) | ✅ |
-| 6 | PWA, hors ligne, finitions | ⏳ |
+| 6 | PWA, hors ligne, plan d'action IA, finitions | ✅ |
 
 ---
 
@@ -199,13 +199,34 @@ Configuration :
 
 > Avec l'offre gratuite de Gemini, Google peut utiliser les contenus envoyés pour améliorer ses modèles.
 
-## 8. Tester sur votre téléphone
+### Plan d'action IA (toutes les tâches)
+Bouton **Plan IA** en haut d'« Aujourd'hui » (et dans la barre latérale sur PC). On choisit l'horizon (aujourd'hui ou 7 jours) et, si besoin, des contraintes (« 3 h dispo cet après-midi »). L'IA renvoie :
+- une synthèse ;
+- les tâches classées (urgent, important, rapide, à débloquer, peut attendre), avec le **pourquoi** et le **comment** ;
+- un plan par créneaux ;
+- des conseils d'organisation.
+
+Le dernier plan reste consultable hors ligne. Les tâches sont envoyées au modèle sous des références courtes (T1, T2…), et seuls titres, échéances, sous-tâches, étiquettes et noms des contacts sont transmis.
+
+## 8. PWA et hors ligne (phase 6)
+
+- **Installation** : Android (Chrome) via le bandeau « Installer » d'« Aujourd'hui » ou le menu ⋮ ; iPhone via Safari → Partager → « Sur l'écran d'accueil ». L'app s'ouvre en plein écran, avec les raccourcis « Nouvelle tâche » et « Aujourd'hui » (appui long sur l'icône).
+- **Hors ligne** :
+  - le service worker (`public/sw.js`) met l'application en cache : réseau d'abord avec 3 s de délai maximal, puis cache ;
+  - les données sont gardées 7 jours dans IndexedDB ;
+  - créer une tâche, la modifier, la terminer, gérer ses sous-tâches et ses étiquettes fonctionne sans réseau. Ces modifications sont **mises en file d'attente, conservées même si l'app est fermée**, puis envoyées au retour du réseau (bandeau « Hors ligne · n modifications en attente »). Voir `src/lib/offline.ts`.
+  - Les fonctions qui demandent le serveur (pièces jointes, IA, contacts, rappels) attendent le réseau.
+- **Tirer vers le bas** sur une liste pour actualiser.
+- **Dictée vocale** : bouton micro dans la saisie rapide, la description, les notes, les sous-tâches et le plan IA. Il est masqué si le navigateur ne le gère pas ; le micro du clavier reste disponible. Selon le navigateur, la voix peut être transcrite par les serveurs de Google (Chrome) ou d'Apple (Safari).
+- **Poids** : environ 220 Ko compressés au premier chargement. Les pages secondaires, le détail d'une tâche et le rendu Markdown se chargent à la demande. Ensuite, l'app est servie depuis le cache.
+
+## 9. Tester sur votre téléphone
 
 - **Version déployée** : ouvrez <https://niamort36-prog.github.io/taskmanager/> dans Chrome (Android) ou Safari (iPhone).
 - **Version locale** : `npm run dev -- --host`, puis ouvrez `http://<IP-du-PC>:5173/taskmanager/` depuis le téléphone (même Wi-Fi). Ajoutez cette URL aux *Redirect URLs* Supabase si vous voulez utiliser le lien de l'email ; le code à 6 chiffres fonctionne dans tous les cas.
 - **Dans le navigateur du PC** : outils de développement (F12) → icône téléphone → *iPhone 12 Pro* (390 px), *Galaxy S8* (360 px), *iPhone 14 Pro Max* (430 px).
 
-## 9. Gestes et raccourcis
+## 10. Gestes et raccourcis
 
 | Geste | Effet |
 |---|---|
@@ -215,10 +236,12 @@ Configuration :
 | Appui long | Sélection multiple → terminer / reporter / supprimer en groupe |
 | Bouton « + » | Saisie rapide (titre seul + raccourcis de date) |
 | Tirer la poignée d'une sous-tâche | Réordonner |
+| Tirer la liste vers le bas | Actualiser |
+| Appui long sur l'icône de l'app | Raccourcis « Nouvelle tâche », « Aujourd'hui » |
 | Boutons téléphone / bulle / enveloppe d'un contact | Appeler, SMS, email (tel:, sms:, mailto:) |
 | Toucher un chemin réseau | Le copie dans le presse-papiers (un navigateur ne peut pas l'ouvrir) |
 
-## 10. Secrets
+## 11. Secrets
 
 Tous les secrets vont dans **Supabase → Edge Functions → Secrets** (ou `npx supabase secrets set NOM=valeur`), jamais dans le dépôt :
 
