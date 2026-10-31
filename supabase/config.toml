@@ -440,3 +440,6 @@ verify_jwt = false
 
 [functions.calendar]
 verify_jwt = false
+
+[functions.prepa-sync]
+verify_jwt = false

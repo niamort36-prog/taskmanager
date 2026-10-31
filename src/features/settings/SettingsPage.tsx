@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { useSettings, useUpdateSettings } from './api'
 import { BackupCard } from './BackupCard'
 import { CalendarFeedCard } from './CalendarFeedCard'
+import { PrepaSyncCard } from './PrepaSyncCard'
 import { NotificationSettings } from './NotificationSettings'
 
 export function SettingsPage() {
@@ -72,6 +73,11 @@ export function SettingsPage() {
         <section className="space-y-2">
           <h2 className="font-semibold text-muted">Agenda</h2>
           <CalendarFeedCard settings={settings} />
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="font-semibold text-muted">Chantiers</h2>
+          <PrepaSyncCard settings={settings} />
         </section>
 
         <section className="space-y-2">

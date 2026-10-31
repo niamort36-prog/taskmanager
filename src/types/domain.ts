@@ -83,6 +83,10 @@ export interface Settings {
   weekly_plan_time: string
   last_weekly_plan_on: string | null
   calendar_token: string | null
+  prepa_enabled: boolean
+  prepa_team: string
+  prepa_cdt_names: string
+  last_prepa_sync_on: string | null
   ai_daily_limit: number
 }
 

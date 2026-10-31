@@ -250,6 +250,21 @@ Bouton **imprimante** en haut de « Toutes les tâches ».
 - **Partager vers Mes tâches** (Android, app installée) : depuis Chrome, une autre app ou un SMS, menu **Partager** → **Tâches**. La saisie rapide s'ouvre avec le texte comme titre, et le lien éventuel est ajouté aux liens de la tâche. Le partage d'images n'est pas pris en charge. Sur iPhone, Safari ne permet pas aux PWA de recevoir des partages.
 - **Statistiques** : Réglages → Données → **Statistiques**. Terminées cette semaine, retards, part des tâches finies à temps, temps passé, tâches terminées et temps passé par semaine sur 12 semaines (toucher une barre affiche sa valeur), délai médian, et les tâches qui prennent le plus de temps.
 
+## 9 quater. Version 1.4 : chantiers du Suivi de prépa
+
+Réglages → Chantiers → **Analyser maintenant** (ou **Analyse automatique chaque mois**, le 1er vers 6 h).
+
+- La fonction `prepa-sync` lit les chantiers du [Suivi de prépa](https://niamort36-prog.github.io/TableauSuiviPrepa/) (base Firebase `suivichantier-b001e`, lecture seule) et garde ceux de l'équipe **EEL Limoges**, **non archivés**, dont le CdT ou le suppléant correspond au nom indiqué (« Roy, Romain » par défaut, sans tenir compte des majuscules ni des accents).
+- Pour chaque nouveau chantier, une tâche est créée :
+  - **titre** « Chantier <ligne> (<tension>) : <nature des travaux> » ;
+  - **échéance** : la fin de consignation ;
+  - **description** rédigée par Gemini, suivie des faits (ligne, dates de consignation, CdT, OT, OI, avancement) ;
+  - **sous-tâches** : les étapes de prépa encore sans réponse, avec leur date butoir (début du chantier − N jours, comme dans le Suivi de prépa), plus 0 à 6 actions tirées de la description et des commentaires, jamais après la fin de consignation ;
+  - **étiquette** « Chantier » et **lien** vers le Suivi de prépa ;
+  - **priorité** selon la proximité du début et les étapes en retard.
+- Un chantier n'est importé qu'une fois (table `prepa_imports`). Si sa fin de consignation change, l'échéance de la tâche suit. Une tâche supprimée n'est pas recréée.
+- Chaque nouveau chantier compte pour un appel IA du jour. Sans IA (quota atteint, panne), la tâche est créée quand même, avec la description d'origine.
+
 ## 10. Tester sur votre téléphone
 
 - **Version déployée** : ouvrez <https://niamort36-prog.github.io/taskmanager/> dans Chrome (Android) ou Safari (iPhone).

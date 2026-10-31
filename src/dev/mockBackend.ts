@@ -89,7 +89,7 @@ const DEFAULTS: Record<string, () => Row> = {
   task_templates: () => ({ id: uuid(), user_id: USER_ID, subtasks: [], created_at: new Date().toISOString() }),
   notification_logs: () => ({}),
   attachments: () => ({ id: uuid(), user_id: USER_ID, label: '', storage_path: null, location: null, mime: null, size: null, created_at: new Date().toISOString() }),
-  settings: () => ({ user_id: USER_ID, theme: 'dark', timezone: 'Europe/Paris', push_enabled: true, email_enabled: false, sms_enabled: false, notify_email: null, dnd_start: null, dnd_end: null, digest_enabled: false, digest_time: '07:30', weekly_plan_enabled: false, weekly_plan_time: '07:00', last_weekly_plan_on: null, calendar_token: null, ai_daily_limit: 50 }),
+  settings: () => ({ user_id: USER_ID, theme: 'dark', timezone: 'Europe/Paris', push_enabled: true, email_enabled: false, sms_enabled: false, notify_email: null, dnd_start: null, dnd_end: null, digest_enabled: false, digest_time: '07:30', weekly_plan_enabled: false, weekly_plan_time: '07:00', last_weekly_plan_on: null, calendar_token: null, prepa_enabled: false, prepa_team: 'EEL Limoges', prepa_cdt_names: 'Roy, Romain', last_prepa_sync_on: null, ai_daily_limit: 50 }),
 }
 
 function parseValue(v: string): unknown {
@@ -302,6 +302,10 @@ export function installMockBackend() {
     if (url.pathname.includes('/auth/v1/')) return json({})
     if (url.pathname.endsWith('/rest/v1/rpc/ai_quota')) return json([{ used: 2, daily_limit: 50, last_minute: 0 }])
     if (url.pathname.endsWith('/functions/v1/ai')) return mockAi(JSON.parse(String(init.body ?? '{}')))
+    if (url.pathname.endsWith('/functions/v1/prepa-sync')) {
+      await new Promise((r) => setTimeout(r, 800))
+      return json({ ok: true, report: { found: 2, created: ['Chantier Clerac - Plaud (400 kV) : Remplacement chaînes supports'], updated: [], unchanged: 1, ignored: 0, errors: [] } })
+    }
     if (url.pathname.includes('/functions/v1/')) return json({ ok: true, detail: 'démo' })
     // Storage simulé : les fichiers ne sont pas conservés.
     if (url.pathname.includes('/storage/v1/object/sign/')) {
