@@ -11,8 +11,11 @@ import {
   fetchChantiers,
   myOpenChantiers,
   parseNames,
+  normTitle,
   PREPA_APP_URL,
   prepaPrompt,
+  validatedSteps,
+  withProgress,
 } from '../_shared/prepa.ts'
 
 const cors = {
@@ -25,6 +28,7 @@ interface Report {
   found: number
   created: string[]
   updated: string[]
+  progressed: { title: string; steps: string[] }[]
   unchanged: number
   ignored: number
   errors: string[]
@@ -64,7 +68,7 @@ async function syncUser(userId: string, all: Chantier[]): Promise<Report> {
   const names = parseNames(s?.prepa_cdt_names ?? 'Roy, Romain')
   if (!names.length) throw new Error('Indiquez votre nom de CdT dans les réglages.')
   const mine = myOpenChantiers(all, s?.prepa_team ?? 'EEL Limoges', names)
-  const report: Report = { found: mine.length, created: [], updated: [], unchanged: 0, ignored: 0, errors: [] }
+  const report: Report = { found: mine.length, created: [], updated: [], progressed: [], unchanged: 0, ignored: 0, errors: [] }
   if (!mine.length) return report
 
   const { data: imports } = await admin
@@ -84,13 +88,21 @@ async function syncUser(userId: string, all: Chantier[]): Promise<Report> {
           report.ignored++
           continue
         }
+        let changed = false
         const consEnd = c.consEnd ?? c.end ?? null
         if (consEnd && consEnd !== prev.cons_end) {
           const plan = buildTaskPlan(c, role, null)
           await admin.from('tasks').update({ due_at: plan.due_at, due_has_time: false }).eq('id', task.id)
           await admin.from('prepa_imports').update({ cons_end: consEnd, updated_at: new Date().toISOString() }).eq('user_id', userId).eq('chantier_id', cid)
           report.updated.push(task.title)
-        } else report.unchanged++
+          changed = true
+        }
+        const steps = await syncProgress(task.id, c)
+        if (steps.length) {
+          report.progressed.push({ title: task.title, steps })
+          changed = true
+        }
+        if (!changed) report.unchanged++
         continue
       }
       const plan = buildTaskPlan(c, role, await askAi(userId, c, role))
@@ -102,6 +114,33 @@ async function syncUser(userId: string, all: Chantier[]): Promise<Report> {
     }
   }
   return report
+}
+
+/**
+ * Avancement du chantier : les étapes traitées depuis l'import (fait ou non
+ * concerné dans le Suivi de prépa) cochent leur sous-tâche. Ne décoche jamais.
+ * Renvoie les étapes nouvellement validées.
+ */
+async function syncProgress(taskId: string, c: Chantier): Promise<string[]> {
+  const validated = new Map(validatedSteps(c).map((s) => [s.key, s.label]))
+  if (!validated.size) return []
+  const { data: subs, error } = await admin.from('subtasks').select('id, title').eq('task_id', taskId).eq('done', false)
+  if (error) throw new Error(error.message)
+  const toDo = (subs ?? []).filter((s) => validated.has(normTitle(s.title)))
+  if (!toDo.length) return []
+  const { error: e } = await admin
+    .from('subtasks')
+    .update({ done: true, done_at: new Date().toISOString() })
+    .in('id', toDo.map((s) => s.id))
+  if (e) throw new Error(e.message)
+
+  // Ligne "Avancement de la prépa" de la description.
+  const { data: t } = await admin.from('tasks').select('description').eq('id', taskId).maybeSingle()
+  if (t?.description) {
+    const description = withProgress(t.description, c.pct)
+    if (description !== t.description) await admin.from('tasks').update({ description }).eq('id', taskId)
+  }
+  return toDo.map((s) => validated.get(normTitle(s.title))!)
 }
 
 /** Description et actions en plus par l'IA ; sans IA (quota, panne), la tâche est créée quand même. */

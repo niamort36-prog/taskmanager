@@ -112,6 +112,21 @@ export function pendingSteps(c: Chantier) {
   }))
 }
 
+/** Titre de la sous-tâche créée pour une étape ("Catégorie : libellé"). */
+export const stepTitle = (s: { cat: string; l: string }) => `${s.cat} : ${s.l}`
+
+/** Étapes traitées dans le Suivi de prépa (fait ou non concerné), avec le titre de leur sous-tâche. */
+export function validatedSteps(c: Chantier) {
+  return STEPS.filter((s) => c.states?.[s.id]).map((s) => ({ key: norm(stepTitle(s)), label: s.l }))
+}
+
+export const normTitle = norm
+
+/** Met à jour la ligne d'avancement dans une description générée. */
+export function withProgress(description: string, pct: number | undefined) {
+  return description.replace(/Avancement de la prépa : \d+ %/, `Avancement de la prépa : ${pct ?? 0} %`)
+}
+
 export function doneSteps(c: Chantier) {
   return STEPS.filter((s) => c.states?.[s.id]).map((s) => `${s.l} (${c.states![s.id] === 'no' ? 'non concerné' : 'fait'})`)
 }
@@ -189,7 +204,7 @@ export function buildTaskPlan(c: Chantier, role: string, ai: AiPrepa | null, now
   const title = `Chantier ${name}${short ? ` : ${short}` : ''}`.slice(0, 200)
 
   const pending = pendingSteps(c)
-  const subtasks = pending.map((s) => ({ title: `${s.cat} : ${s.l}`, date: s.date }))
+  const subtasks = pending.map((s) => ({ title: stepTitle(s), date: s.date }))
   const seen = new Set(subtasks.map((s) => norm(s.title)))
   for (const x of (ai?.extra_subtasks ?? []).slice(0, 6)) {
     const t = String(x?.title ?? '').trim().slice(0, 200)

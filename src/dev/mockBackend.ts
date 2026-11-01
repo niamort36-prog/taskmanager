@@ -304,7 +304,7 @@ export function installMockBackend() {
     if (url.pathname.endsWith('/functions/v1/ai')) return mockAi(JSON.parse(String(init.body ?? '{}')))
     if (url.pathname.endsWith('/functions/v1/prepa-sync')) {
       await new Promise((r) => setTimeout(r, 800))
-      return json({ ok: true, report: { found: 2, created: ['Chantier Clerac - Plaud (400 kV) : Remplacement chaînes supports'], updated: [], unchanged: 1, ignored: 0, errors: [] } })
+      return json({ ok: true, report: { found: 2, created: [], updated: [], progressed: [{ title: 'Chantier Clerac - Plaud (400 kV) : Remplacement chaînes supports', steps: ['Réception matériel', 'Validation hiérarchique'] }], unchanged: 1, ignored: 0, errors: [] } })
     }
     if (url.pathname.includes('/functions/v1/')) return json({ ok: true, detail: 'démo' })
     // Storage simulé : les fichiers ne sont pas conservés.

@@ -263,6 +263,7 @@ Réglages → Chantiers → **Analyser maintenant** (ou **Analyse automatique ch
   - **étiquette** « Chantier » et **lien** vers le Suivi de prépa ;
   - **priorité** selon la proximité du début et les étapes en retard.
 - Un chantier n'est importé qu'une fois (table `prepa_imports`). Si sa fin de consignation change, l'échéance de la tâche suit. Une tâche supprimée n'est pas recréée.
+- À chaque nouvelle analyse (mensuelle ou à la demande), les étapes validées depuis l'import dans le Suivi de prépa (« fait » ou « non concerné ») cochent leur sous-tâche (correspondance par le titre « Catégorie : libellé »), et la ligne « Avancement de la prépa » de la description est mise à jour. Rien n'est jamais décoché.
 - Chaque nouveau chantier compte pour un appel IA du jour. Sans IA (quota atteint, panne), la tâche est créée quand même, avec la description d'origine.
 
 ## 10. Tester sur votre téléphone

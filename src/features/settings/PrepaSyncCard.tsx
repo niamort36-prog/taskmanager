@@ -11,6 +11,7 @@ interface Report {
   found: number
   created: string[]
   updated: string[]
+  progressed?: { title: string; steps: string[] }[]
   unchanged: number
   ignored: number
   errors: string[]
@@ -38,7 +39,7 @@ export function PrepaSyncCard({ settings }: { settings: Settings | undefined }) 
       if (error) throw new Error(error.message)
       if (!data?.ok || !data.report) throw new Error(data?.error ?? 'Analyse impossible')
       setReport(data.report)
-      if (data.report.created.length || data.report.updated.length) void qc.invalidateQueries({ queryKey: qk.tasks })
+      if (data.report.created.length || data.report.updated.length || data.report.progressed?.length) void qc.invalidateQueries({ queryKey: qk.tasks })
     } catch (e) {
       toast(e instanceof Error ? e.message : String(e))
     } finally {
@@ -53,7 +54,8 @@ export function PrepaSyncCard({ settings }: { settings: Settings | undefined }) 
       </div>
       <p className="text-muted">
         Les chantiers en cours de l’équipe {settings.prepa_team} dont vous êtes CdT (ou suppléant) deviennent des tâches : description,
-        fin de consignation en échéance, étapes de prépa restantes avec leurs dates butoir. Un chantier n’est importé qu’une fois.
+        fin de consignation en échéance, étapes de prépa restantes avec leurs dates butoir. Un chantier n’est importé qu’une fois ;
+        ensuite, chaque analyse coche les étapes validées depuis dans le Suivi de prépa.
       </p>
       <label className="block space-y-1">
         <span>Votre nom de CdT</span>
@@ -111,6 +113,16 @@ function ReportView({ r }: { r: Report }) {
         </div>
       )}
       {r.updated.length > 0 && <p>Fin de consignation mise à jour : {r.updated.join(', ')}</p>}
+      {r.progressed?.map((p) => (
+        <div key={p.title}>
+          <p className="font-semibold text-success">Avancement validé · {p.title}</p>
+          <ul className="list-disc pl-5">
+            {p.steps.map((st) => (
+              <li key={st}>{st}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
       {r.unchanged > 0 && <p className="text-muted">{r.unchanged} déjà importé{r.unchanged > 1 ? 's' : ''}, sans changement.</p>}
       {r.ignored > 0 && <p className="text-muted">{r.ignored} ignoré{r.ignored > 1 ? 's' : ''} (tâche supprimée).</p>}
       {r.errors.map((e) => (
