@@ -1,5 +1,5 @@
 // Implémentation Google Gemini (API REST generateContent, sortie JSON structurée).
-// En cas de surcharge (503/500), on retente puis on bascule sur un modèle de secours.
+// En cas de surcharge (503/500) ou de réponse coupée, on bascule sur un modèle de secours.
 import { AiError, type AiProvider, type AiRequest, type AiResult } from './provider.ts'
 
 const DEFAULT_MODEL = 'gemini-2.5-flash'
@@ -35,7 +35,14 @@ export function gemini(): AiProvider {
               temperature: req.temperature ?? 0.6,
               responseMimeType: 'application/json',
               responseSchema: req.schema,
-              maxOutputTokens: 4096,
+              // La "réflexion" des modèles 2.5 est décomptée de maxOutputTokens :
+              // on la plafonne et on laisse de la marge, sinon le JSON est coupé.
+              maxOutputTokens: 8192,
+              ...(model.startsWith('gemini-2.5')
+                ? { thinkingConfig: { thinkingBudget: 1024 } }
+                : /^gemini-[3-9]/.test(model)
+                ? { thinkingConfig: { thinkingLevel: 'low' } }
+                : {}),
             },
           }),
         },
@@ -77,6 +84,10 @@ export function gemini(): AiProvider {
         body.promptFeedback?.blockReason ?? 'réponse vide'
       throw new AiError(`Gemini n’a pas répondu (${reason}).`, 502)
     }
+    // Réponse coupée (limite de longueur) : JSON incomplet, on retente (modèle de secours).
+    if (candidate?.finishReason === 'MAX_TOKENS') {
+      throw new AiError('Réponse de Gemini trop longue, réessayez.', 503)
+    }
     try {
       return {
         data: JSON.parse(text),
@@ -85,7 +96,7 @@ export function gemini(): AiProvider {
         tokensOut: body.usageMetadata?.candidatesTokenCount,
       }
     } catch {
-      throw new AiError('Réponse de Gemini illisible, réessayez.', 502)
+      throw new AiError('Réponse de Gemini illisible, réessayez.', 503)
     }
   }
 
