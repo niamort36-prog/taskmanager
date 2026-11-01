@@ -64,6 +64,14 @@ db.subtasks.push(
   { id: uuid(), task_id: t0, user_id: USER_ID, title: 'Demander 3 devis', done: false, due_at: iso(28), position: 1, created_at: iso(-1), updated_at: iso(-1) },
   { id: uuid(), task_id: t0, user_id: USER_ID, title: 'Valider avec le client', done: false, due_at: null, position: 2, created_at: iso(-1), updated_at: iso(-1) },
 )
+// Chantier lointain dont des sous-tâches sont en retard ou pour demain.
+const chantier = task('Chantier Clerac - Plaud (400 kV) : Remplacement chaînes supports', { due_at: iso(24 * 12), priority: 3 })
+db.tasks.push(chantier)
+db.subtasks.push(
+  { id: uuid(), task_id: chantier.id, user_id: USER_ID, title: 'Préparation : Validation hiérarchique', done: false, due_at: iso(-48), position: 0, created_at: iso(-200), updated_at: iso(-200) },
+  { id: uuid(), task_id: chantier.id, user_id: USER_ID, title: 'Matériel : Chargement matériel', done: false, due_at: iso(20), position: 1, created_at: iso(-200), updated_at: iso(-200) },
+  { id: uuid(), task_id: chantier.id, user_id: USER_ID, title: 'Documents : NIP', done: false, due_at: iso(24 * 5), position: 2, created_at: iso(-200), updated_at: iso(-200) },
+)
 db.task_contacts.push({ task_id: t0, contact_id: db.contacts[0].id, user_id: USER_ID, role_on_task: 'Fournisseur', created_at: iso(-1) })
 // Historique pour les statistiques : tâches terminées et temps passé sur 12 semaines.
 ;[5, 9, 12, 20, 30, 33, 40, 47, 52, 60, 61, 66, 75, 80].forEach((d, i) =>

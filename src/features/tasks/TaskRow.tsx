@@ -3,7 +3,8 @@ import { useDrag } from '@use-gesture/react'
 import { Check, CalendarClock, ListChecks, MapPin, Repeat } from 'lucide-react'
 import { shortAddress } from '@/lib/maps'
 import type { Tag, TaskListItem } from '@/types/domain'
-import { DueBadge } from './DueBadge'
+import { DueBadge, SubtaskDueBadge } from './DueBadge'
+import { urgentSubtasks } from './subtaskDues'
 import { PRIORITY_DOT, STATUS_CLASS, STATUS_LABEL } from './meta'
 import { recurrenceSummary } from './RecurrencePicker'
 import { useTaskUi } from './TaskUiContext'
@@ -70,6 +71,7 @@ export function TaskRow({ task, tags }: { task: TaskListItem; tags: Map<string, 
   const gesture = bind()
 
   const tagList = task.tag_ids.map((id) => tags.get(id)).filter((t): t is Tag => Boolean(t))
+  const urgent = urgentSubtasks(task)
 
   return (
     <li className="relative overflow-hidden rounded-xl">
@@ -162,6 +164,11 @@ export function TaskRow({ task, tags }: { task: TaskListItem; tags: Map<string, 
               </span>
             ))}
           </div>
+          {urgent.length > 0 && (
+            <div className="mt-1 flex min-w-0">
+              <SubtaskDueBadge subtasks={urgent} />
+            </div>
+          )}
         </div>
       </div>
     </li>

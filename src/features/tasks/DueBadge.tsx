@@ -1,5 +1,6 @@
-import { AlarmClock, CalendarDays } from 'lucide-react'
+import { AlarmClock, CalendarDays, CornerDownRight } from 'lucide-react'
 import { dueState, formatDue } from '@/lib/dates'
+import { subtaskHasTime, type SubtaskDue } from './subtaskDues'
 
 const CLASS = {
   overdue: 'bg-danger/15 text-danger font-semibold',
@@ -19,6 +20,26 @@ export function DueBadge({ due_at, hasTime, done }: { due_at: string | null; has
       <Icon className="size-4" aria-hidden />
       {state === 'overdue' && <span className="sr-only">En retard :</span>}
       {formatDue(due_at, hasTime)}
+    </span>
+  )
+}
+
+/**
+ * Sous-tâche urgente (en retard, aujourd'hui, < 48 h) affichée sur la ligne de
+ * sa tâche, aux couleurs du DueBadge ; "+N" s'il y en a d'autres.
+ */
+export function SubtaskDueBadge({ subtasks }: { subtasks: SubtaskDue[] }) {
+  const [first] = subtasks
+  if (!first) return null
+  const state = dueState(first.due_at)
+  const more = subtasks.length - 1
+  return (
+    <span className={`inline-flex max-w-full items-center gap-1 rounded-md px-1.5 py-0.5 ${CLASS[state]}`}>
+      <CornerDownRight className="size-4 shrink-0" aria-hidden />
+      <span className="sr-only">Sous-tâche{state === 'overdue' ? ' en retard' : ''} :</span>
+      <span className="min-w-0 truncate">{first.title}</span>
+      <span className="shrink-0">· {formatDue(first.due_at, subtaskHasTime(first.due_at))}</span>
+      {more > 0 && <span className="shrink-0">+{more}</span>}
     </span>
   )
 }

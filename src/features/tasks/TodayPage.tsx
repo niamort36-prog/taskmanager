@@ -3,9 +3,10 @@ import { Link } from 'react-router'
 import { Sparkles } from 'lucide-react'
 import { InstallBanner } from '@/components/ui/InstallBanner'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { dueBucket, formatDayTitle, nowParis } from '@/lib/dates'
+import { formatDayTitle, nowParis } from '@/lib/dates'
 import { useTasks } from './api'
 import { sortTasks } from './filters'
+import { effectiveBucket } from './subtaskDues'
 import { ErrorBox, LoadingList, TaskSection } from './TaskList'
 
 /** Vue "Aujourd'hui" : en retard, aujourd'hui, 7 prochains jours. */
@@ -15,10 +16,12 @@ export function TodayPage() {
   const groups = useMemo(() => {
     const now = nowParis()
     const open = sortTasks((data ?? []).filter((t) => t.status !== 'done'))
+    // Une tâche remonte aussi selon ses sous-tâches datées (la plus urgente l'emporte).
+    const bucket = new Map(open.map((t) => [t.id, effectiveBucket(t, now)]))
     return {
-      overdue: open.filter((t) => dueBucket(t.due_at, now) === 'overdue'),
-      today: open.filter((t) => dueBucket(t.due_at, now) === 'today'),
-      week: open.filter((t) => dueBucket(t.due_at, now) === 'week'),
+      overdue: open.filter((t) => bucket.get(t.id) === 'overdue'),
+      today: open.filter((t) => bucket.get(t.id) === 'today'),
+      week: open.filter((t) => bucket.get(t.id) === 'week'),
     }
   }, [data])
 

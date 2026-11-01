@@ -266,6 +266,12 @@ Réglages → Chantiers → **Analyser maintenant** (ou **Analyse automatique ch
 - À chaque nouvelle analyse (mensuelle ou à la demande), les étapes validées depuis l'import dans le Suivi de prépa (« fait » ou « non concerné ») cochent leur sous-tâche (correspondance par le titre « Catégorie : libellé »), et la ligne « Avancement de la prépa » de la description est mise à jour. Rien n'est jamais décoché.
 - Chaque nouveau chantier compte pour un appel IA du jour. Sans IA (quota atteint, panne), la tâche est créée quand même, avec la description d'origine.
 
+## 9 quinquies. Version 1.5 : sous-tâches datées bien visibles
+
+- Une sous-tâche non cochée **en retard, pour aujourd'hui ou dans les 48 h** s'affiche sous le titre de sa tâche, partout (Aujourd'hui, Tâches, Kanban, Calendrier) : « ↳ titre · date », en rouge, orange ou bleu comme les échéances, avec « +N » s'il y en a d'autres.
+- Vue **Aujourd'hui** : une tâche est rangée selon l'échéance la plus urgente entre la sienne et celles de ses sous-tâches (ex. un chantier dû dans 12 jours avec une sous-tâche en retard apparaît dans « En retard »).
+- **Calendrier** : point rouge sur les jours où une sous-tâche est en retard, sous-tâches colorées selon l'urgence, et les sous-tâches en retard rejoignent la rubrique « En retard » de l'agenda.
+
 ## 10. Tester sur votre téléphone
 
 - **Version déployée** : ouvrez <https://niamort36-prog.github.io/taskmanager/> dans Chrome (Android) ou Safari (iPhone).

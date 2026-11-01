@@ -6,7 +6,8 @@ import { useTasks } from '@/features/tasks/api'
 import { sortTasks } from '@/features/tasks/filters'
 import { ErrorBox, LoadingList, TaskList } from '@/features/tasks/TaskList'
 import { useTaskUi } from '@/features/tasks/TaskUiContext'
-import { dateFromKey, dayKey, dueState, formatDayTitle, formatMonthTitle, inTz, nowParis } from '@/lib/dates'
+import { subtaskHasTime } from '@/features/tasks/subtaskDues'
+import { dateFromKey, dayKey, dueState, formatDayTitle, formatDue, formatMonthTitle, inTz, nowParis } from '@/lib/dates'
 import type { TaskListItem } from '@/types/domain'
 
 type Mode = 'month' | 'agenda'
@@ -114,7 +115,9 @@ function MonthView({ byDay }: { byDay: Map<string, DayItems> }) {
             const k = dayKey(d)
             const it = byDay.get(k)
             const open = (it?.tasks.filter((t) => t.status !== 'done').length ?? 0) + (it?.subtasks.filter((s) => !s.done).length ?? 0)
-            const late = it?.tasks.some((t) => t.status !== 'done' && dueState(t.due_at) === 'overdue')
+            const late =
+              it?.tasks.some((t) => t.status !== 'done' && dueState(t.due_at) === 'overdue') ||
+              it?.subtasks.some((s) => isOpen(s) && dueState(s.due_at) === 'overdue')
             const inMonth = isSameMonth(d, month, { in: inTz })
             return (
               <button
@@ -148,6 +151,17 @@ function MonthView({ byDay }: { byDay: Map<string, DayItems> }) {
   )
 }
 
+/** Sous-tâche à faire (non cochée, tâche non terminée). */
+const isOpen = (s: SubtaskDue) => !s.done && s.task.status !== 'done'
+
+const SUB_TONE = {
+  overdue: 'border-danger/50 bg-danger/10',
+  today: 'border-warning/50 bg-warning/10',
+  soon: 'border-accent/50',
+  later: 'border-line',
+  none: 'border-line',
+} as const
+
 function DayContent({ items }: { items: DayItems | undefined }) {
   const ui = useTaskUi()
   if (!items || (!items.tasks.length && !items.subtasks.length)) return <p className="text-muted">Aucune échéance.</p>
@@ -156,20 +170,24 @@ function DayContent({ items }: { items: DayItems | undefined }) {
       <TaskList tasks={items.tasks} />
       {items.subtasks.length > 0 && (
         <ul className="space-y-1">
-          {items.subtasks.map((s) => (
-            <li key={s.id}>
-              <button
-                onClick={() => ui.openTask(s.task.id)}
-                className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-left"
-              >
-                <CornerDownRight className="size-5 shrink-0 text-muted" />
-                <span className="min-w-0 flex-1">
-                  <span className={s.done ? 'text-muted line-through' : ''}>{s.title}</span>
-                  <span className="block truncate text-muted">{s.task.title}</span>
-                </span>
-              </button>
-            </li>
-          ))}
+          {items.subtasks.map((s) => {
+            const state = isOpen(s) ? dueState(s.due_at) : 'later'
+            return (
+              <li key={s.id}>
+                <button
+                  onClick={() => ui.openTask(s.task.id)}
+                  className={`flex min-h-11 w-full items-center gap-2 rounded-lg border bg-surface px-3 py-2 text-left ${SUB_TONE[state]}`}
+                >
+                  <CornerDownRight className={`size-5 shrink-0 ${state === 'overdue' ? 'text-danger' : state === 'today' ? 'text-warning' : 'text-muted'}`} />
+                  <span className="min-w-0 flex-1">
+                    <span className={isOpen(s) ? '' : 'text-muted line-through'}>{s.title}</span>
+                    {state === 'overdue' && <span className="ml-2 font-semibold text-danger">{formatDue(s.due_at, subtaskHasTime(s.due_at))}</span>}
+                    <span className="block truncate text-muted">{s.task.title}</span>
+                  </span>
+                </button>
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>
@@ -181,18 +199,21 @@ function AgendaView({ byDay }: { byDay: Map<string, DayItems> }) {
   const todayKey = dayKey(nowParis())
   const limit = dayKey(addMonths(nowParis(), 2, { in: inTz }))
   const keys = [...byDay.keys()].filter((k) => k >= todayKey && k <= limit).sort()
-  const overdue = [...byDay.entries()]
-    .filter(([k]) => k < todayKey)
-    .flatMap(([, v]) => v.tasks.filter((t) => t.status !== 'done'))
+  const past = [...byDay.entries()].filter(([k]) => k < todayKey).map(([, v]) => v)
+  const overdue: DayItems = {
+    tasks: sortTasks(past.flatMap((v) => v.tasks.filter((t) => t.status !== 'done'))),
+    subtasks: past.flatMap((v) => v.subtasks.filter(isOpen)).sort((a, b) => a.due_at.localeCompare(b.due_at)),
+  }
+  const hasOverdue = overdue.tasks.length + overdue.subtasks.length > 0
 
-  if (!keys.length && !overdue.length) return <p className="py-10 text-center text-muted">Aucune échéance à venir.</p>
+  if (!keys.length && !hasOverdue) return <p className="py-10 text-center text-muted">Aucune échéance à venir.</p>
 
   return (
     <div className="space-y-6">
-      {overdue.length > 0 && (
+      {hasOverdue && (
         <section className="space-y-2">
           <h2 className="text-lg font-semibold text-danger">En retard</h2>
-          <TaskList tasks={sortTasks(overdue)} />
+          <DayContent items={overdue} />
         </section>
       )}
       {keys.map((k) => (
