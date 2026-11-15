@@ -34,12 +34,14 @@ export function SubtaskDueBadge({ subtasks }: { subtasks: SubtaskDue[] }) {
   const state = dueState(first.due_at)
   const more = subtasks.length - 1
   return (
-    <span className={`inline-flex max-w-full items-center gap-1 rounded-md px-1.5 py-0.5 ${CLASS[state]}`}>
-      <CornerDownRight className="size-4 shrink-0" aria-hidden />
+    <span className={`inline-flex max-w-full items-start gap-1 rounded-md px-1.5 py-0.5 ${CLASS[state]}`}>
+      <CornerDownRight className="mt-0.5 size-4 shrink-0" aria-hidden />
       <span className="sr-only">Sous-tâche{state === 'overdue' ? ' en retard' : ''} :</span>
-      <span className="min-w-0 truncate">{first.title}</span>
-      <span className="shrink-0">· {formatDue(first.due_at, subtaskHasTime(first.due_at))}</span>
-      {more > 0 && <span className="shrink-0">+{more}</span>}
+      <span className="min-w-0 break-words">
+        {first.title}
+        <span className="whitespace-nowrap"> · {formatDue(first.due_at, subtaskHasTime(first.due_at))}</span>
+        {more > 0 && <span className="whitespace-nowrap"> +{more}</span>}
+      </span>
     </span>
   )
 }

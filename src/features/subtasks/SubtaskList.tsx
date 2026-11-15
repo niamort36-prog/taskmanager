@@ -21,6 +21,13 @@ import { appendText, DictationButton } from '@/components/ui/DictationButton'
 import { fromInputValue, toInputValue } from '@/lib/dates'
 import { DueBadge } from '@/features/tasks/DueBadge'
 import type { Subtask } from '@/types/domain'
+
+/** Ajuste la hauteur d'une zone de texte à son contenu. */
+function autoGrow(el: HTMLTextAreaElement | null) {
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = `${el.scrollHeight}px`
+}
 import { useSubtaskMutations } from './api'
 
 /** Sous-tâches : cochables, renommables, réordonnables (poignée), échéance optionnelle. */
@@ -119,7 +126,7 @@ function SubtaskItem({ subtask: s, m }: { subtask: Subtask; m: ReturnType<typeof
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`rounded-lg bg-surface-2/60 ${isDragging ? 'relative z-10 shadow-lg' : ''}`}
     >
-      <div className="flex items-center">
+      <div className="flex items-start">
         {/* data-vaul-no-drag : sinon la bottom sheet se déplace avec la sous-tâche */}
         <button
           ref={setActivatorNodeRef}
@@ -144,13 +151,24 @@ function SubtaskItem({ subtask: s, m }: { subtask: Subtask; m: ReturnType<typeof
             {s.done && <Check className="size-4" strokeWidth={3} />}
           </span>
         </button>
-        <input
+        {/* Zone multiligne qui s'agrandit : un titre long reste lisible en entier. */}
+        <textarea
+          ref={autoGrow}
+          rows={1}
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            setTitle(e.target.value.replace(/\s*\n\s*/g, ' '))
+            autoGrow(e.target)
+          }}
           onBlur={saveTitle}
-          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              e.currentTarget.blur()
+            }
+          }}
           enterKeyHint="done"
-          className={`min-h-11 min-w-0 flex-1 bg-transparent px-1 ${s.done ? 'text-muted line-through' : ''}`}
+          className={`min-h-11 min-w-0 flex-1 resize-none overflow-hidden bg-transparent px-1 py-2.5 leading-6 break-words ${s.done ? 'text-muted line-through' : ''}`}
           aria-label="Titre de la sous-tâche"
         />
         <button

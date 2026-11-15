@@ -68,7 +68,7 @@ db.subtasks.push(
 const chantier = task('Chantier Clerac - Plaud (400 kV) : Remplacement chaînes supports', { due_at: iso(24 * 12), priority: 3 })
 db.tasks.push(chantier)
 db.subtasks.push(
-  { id: uuid(), task_id: chantier.id, user_id: USER_ID, title: 'Préparation : Validation hiérarchique', done: false, due_at: iso(-48), position: 0, created_at: iso(-200), updated_at: iso(-200) },
+  { id: uuid(), task_id: chantier.id, user_id: USER_ID, title: 'Préparation : Validation hiérarchique du dossier de prépa avec le chef de pôle avant envoi au GMR', done: false, due_at: iso(-48), position: 0, created_at: iso(-200), updated_at: iso(-200) },
   { id: uuid(), task_id: chantier.id, user_id: USER_ID, title: 'Matériel : Chargement matériel', done: false, due_at: iso(20), position: 1, created_at: iso(-200), updated_at: iso(-200) },
   { id: uuid(), task_id: chantier.id, user_id: USER_ID, title: 'Documents : NIP', done: false, due_at: iso(24 * 5), position: 2, created_at: iso(-200), updated_at: iso(-200) },
 )
